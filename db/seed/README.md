@@ -184,11 +184,20 @@ Init scripts and seed scripts are different:
 - `db/init` scripts run automatically only when PostgreSQL initializes a new empty volume.
 - `db/seed` scripts are mounted into the container and run manually.
 
+## Related Seed Work
+
+Product option seed support lives under:
+
+```text
+db/seed/product-options/
+```
+
+That seed work creates matching `product_options_*` tables for later JOIN bottleneck experiments.
+
 ## Intentionally Not Included
 
 This PR intentionally does not include:
 
-- `product_options` seed
 - Product API
 - Java/JPA/Flyway/Liquibase integration
 - DB tuning indexes
