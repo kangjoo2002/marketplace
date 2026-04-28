@@ -2,6 +2,7 @@ services:
   postgres:
     image: postgres:16
     container_name: readpath-postgres
+    shm_size: "1g"
     environment:
       POSTGRES_DB: readpath_lab
       POSTGRES_USER: readpath
