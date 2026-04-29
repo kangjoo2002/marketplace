@@ -99,4 +99,184 @@ class ProductSearchRepositoryTest {
 		assertThat(sql).contains("ORDER BY p.review_count DESC, p.id DESC");
 		assertThat(sql).contains("LIMIT :limit OFFSET :offset");
 	}
+
+	@Test
+	@SuppressWarnings("unchecked")
+	void searchDenormalizedDbUsesReadTableOptionSignaturesAndB1SortShape() {
+		NamedParameterJdbcTemplate jdbcTemplate = mock(NamedParameterJdbcTemplate.class);
+		ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<Map<String, Object>> paramsCaptor = ArgumentCaptor.forClass(Map.class);
+		when(jdbcTemplate.query(
+				sqlCaptor.capture(),
+				paramsCaptor.capture(),
+				ArgumentMatchers.<RowMapper<ProductSearchItemResponse>>any()
+		)).thenReturn(List.<ProductSearchItemResponse>of());
+
+		ProductSearchBaselineProperties properties = new ProductSearchBaselineProperties();
+		ProductSearchRepository repository = new ProductSearchRepository(jdbcTemplate, properties);
+
+		ProductSearchRequest request = new ProductSearchRequest();
+		request.setCategoryId(75L);
+		request.setBrandId(943L);
+		request.setStatus(ProductStatus.ACTIVE);
+		request.setMinPrice(10000);
+		request.setMaxPrice(100000);
+		request.setColor(ProductColor.BLACK);
+		request.setSize(ProductSize.M);
+		request.setStockStatus(StockStatus.IN_STOCK);
+		request.setSort("reviewCountDesc");
+		request.setLimit(50);
+		request.setOffset(100);
+
+		repository.searchDenormalizedDb(request);
+
+		String sql = sqlCaptor.getValue();
+		Map<String, Object> params = paramsCaptor.getValue();
+		assertThat(sql).contains("FROM product_search_documents_moderate_skew psd");
+		assertThat(sql).contains("psd.product_id AS id");
+		assertThat(sql).contains("psd.seller_id");
+		assertThat(sql).contains("psd.rating");
+		assertThat(sql).contains("psd.updated_at");
+		assertThat(sql).doesNotContain("SELECT DISTINCT");
+		assertThat(sql).doesNotContain("products_moderate_skew");
+		assertThat(sql).doesNotContain("JOIN products_moderate_skew");
+		assertThat(sql).doesNotContain("JOIN product_options_moderate_skew");
+		assertThat(sql).doesNotContain("product_options_moderate_skew");
+		assertThat(sql).contains(
+				"psd.option_signatures @> ARRAY[make_product_option_signature(:color, :size, :stockStatus)]"
+		);
+		assertThat(sql).contains("ORDER BY psd.review_count DESC, psd.product_id DESC");
+		assertThat(sql).contains("LIMIT :limit OFFSET :offset");
+		assertThat(params).containsEntry("limit", 50);
+		assertThat(params).containsEntry("offset", 100);
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
+	void searchDenormalizedDbUsesB2CreatedAtSortShape() {
+		NamedParameterJdbcTemplate jdbcTemplate = mock(NamedParameterJdbcTemplate.class);
+		ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<Map<String, Object>> paramsCaptor = ArgumentCaptor.forClass(Map.class);
+		when(jdbcTemplate.query(
+				sqlCaptor.capture(),
+				paramsCaptor.capture(),
+				ArgumentMatchers.<RowMapper<ProductSearchItemResponse>>any()
+		)).thenReturn(List.<ProductSearchItemResponse>of());
+
+		ProductSearchBaselineProperties properties = new ProductSearchBaselineProperties();
+		ProductSearchRepository repository = new ProductSearchRepository(jdbcTemplate, properties);
+
+		ProductSearchRequest request = new ProductSearchRequest();
+		request.setStatus(ProductStatus.ACTIVE);
+		request.setColor(ProductColor.BLACK);
+		request.setSize(ProductSize.M);
+		request.setStockStatus(StockStatus.IN_STOCK);
+		request.setSort("createdAtDesc");
+		request.setLimit(50);
+		request.setOffset(100);
+
+		repository.searchDenormalizedDb(request);
+
+		String sql = sqlCaptor.getValue();
+		Map<String, Object> params = paramsCaptor.getValue();
+		assertThat(sql).contains("FROM product_search_documents_moderate_skew psd");
+		assertThat(sql).contains(
+				"psd.option_signatures @> ARRAY[make_product_option_signature(:color, :size, :stockStatus)]"
+		);
+		assertThat(sql).contains("ORDER BY psd.created_at DESC, psd.product_id DESC");
+		assertThat(sql).doesNotContain("SELECT DISTINCT");
+		assertThat(sql).doesNotContain("products_moderate_skew");
+		assertThat(sql).doesNotContain("product_options_moderate_skew");
+		assertThat(params).containsEntry("limit", 50);
+		assertThat(params).containsEntry("offset", 100);
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
+	void searchDenormalizedDbPartialOptionFilterUsesReadTableOnlySignatureElements() {
+		NamedParameterJdbcTemplate jdbcTemplate = mock(NamedParameterJdbcTemplate.class);
+		ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<Map<String, Object>> paramsCaptor = ArgumentCaptor.forClass(Map.class);
+		when(jdbcTemplate.query(
+				sqlCaptor.capture(),
+				paramsCaptor.capture(),
+				ArgumentMatchers.<RowMapper<ProductSearchItemResponse>>any()
+		)).thenReturn(List.<ProductSearchItemResponse>of());
+
+		ProductSearchBaselineProperties properties = new ProductSearchBaselineProperties();
+		ProductSearchRepository repository = new ProductSearchRepository(jdbcTemplate, properties);
+
+		ProductSearchRequest request = new ProductSearchRequest();
+		request.setColor(ProductColor.BLACK);
+		request.setSize(ProductSize.M);
+		request.setSort("createdAtDesc");
+		request.setLimit(50);
+		request.setOffset(100);
+
+		repository.searchDenormalizedDb(request);
+
+		String sql = sqlCaptor.getValue();
+		Map<String, Object> params = paramsCaptor.getValue();
+		assertThat(sql).contains("FROM product_search_documents_moderate_skew psd");
+		assertThat(sql).contains("EXISTS (SELECT 1 FROM unnest(psd.option_signatures) AS option_signature");
+		assertThat(sql).contains("split_part(option_signature, '|', 1) = :color");
+		assertThat(sql).contains("split_part(option_signature, '|', 2) = :size");
+		assertThat(sql).doesNotContain("split_part(option_signature, '|', 3) = :stockStatus");
+		assertThat(sql).doesNotContain("product_options_moderate_skew");
+		assertThat(sql).doesNotContain("products_moderate_skew");
+		assertThat(sql).doesNotContain("SELECT DISTINCT");
+		assertThat(params).containsEntry("color", "BLACK");
+		assertThat(params).containsEntry("size", "M");
+		assertThat(params).doesNotContainKey("stockStatus");
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
+	void searchDenormalizedDbWithoutOptionFiltersDoesNotAddOptionPredicate() {
+		NamedParameterJdbcTemplate jdbcTemplate = mock(NamedParameterJdbcTemplate.class);
+		ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<Map<String, Object>> paramsCaptor = ArgumentCaptor.forClass(Map.class);
+		when(jdbcTemplate.query(
+				sqlCaptor.capture(),
+				paramsCaptor.capture(),
+				ArgumentMatchers.<RowMapper<ProductSearchItemResponse>>any()
+		)).thenReturn(List.<ProductSearchItemResponse>of());
+
+		ProductSearchBaselineProperties properties = new ProductSearchBaselineProperties();
+		ProductSearchRepository repository = new ProductSearchRepository(jdbcTemplate, properties);
+
+		ProductSearchRequest request = new ProductSearchRequest();
+		request.setCategoryId(75L);
+		request.setBrandId(943L);
+		request.setStatus(ProductStatus.ACTIVE);
+		request.setMinPrice(10000);
+		request.setMaxPrice(100000);
+		request.setSort("reviewCountDesc");
+		request.setLimit(50);
+		request.setOffset(100);
+
+		repository.searchDenormalizedDb(request);
+
+		String sql = sqlCaptor.getValue();
+		Map<String, Object> params = paramsCaptor.getValue();
+		assertThat(sql).contains("FROM product_search_documents_moderate_skew psd");
+		assertThat(sql).doesNotContain("option_signatures @>");
+		assertThat(sql).doesNotContain("make_product_option_signature");
+		assertThat(sql).doesNotContain("unnest(psd.option_signatures)");
+		assertThat(sql).doesNotContain("product_options_moderate_skew");
+		assertThat(sql).doesNotContain("products_moderate_skew");
+		assertThat(sql).doesNotContain("SELECT DISTINCT");
+		assertThat(sql).contains("AND psd.category_id = :categoryId");
+		assertThat(sql).contains("AND psd.brand_id = :brandId");
+		assertThat(sql).contains("AND psd.status = :status");
+		assertThat(sql).contains("AND psd.price >= :minPrice");
+		assertThat(sql).contains("AND psd.price <= :maxPrice");
+		assertThat(params).containsEntry("categoryId", 75L);
+		assertThat(params).containsEntry("brandId", 943L);
+		assertThat(params).containsEntry("status", "ACTIVE");
+		assertThat(params).containsEntry("minPrice", 10000);
+		assertThat(params).containsEntry("maxPrice", 100000);
+		assertThat(params).containsEntry("limit", 50);
+		assertThat(params).containsEntry("offset", 100);
+	}
 }

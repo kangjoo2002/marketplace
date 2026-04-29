@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 public class ProductSearchRepository {
 
 	private static final Pattern SAFE_IDENTIFIER = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
+	private static final String PRODUCT_SEARCH_DOCUMENTS_TABLE = "product_search_documents_moderate_skew";
 
 	private final NamedParameterJdbcTemplate jdbcTemplate;
 	private final String productsTable;
@@ -64,6 +65,38 @@ public class ProductSearchRepository {
 		}
 
 		sql.append(orderBy(request.getSort()));
+		sql.append(" LIMIT :limit OFFSET :offset");
+		params.put("limit", request.getLimit());
+		params.put("offset", request.getOffset());
+
+		return jdbcTemplate.query(sql.toString(), params, rowMapper());
+	}
+
+	public List<ProductSearchItemResponse> searchDenormalizedDb(ProductSearchRequest request) {
+		Map<String, Object> params = new HashMap<>();
+		StringBuilder sql = new StringBuilder()
+				.append("SELECT ")
+				.append("psd.product_id AS id, psd.seller_id, psd.category_id, psd.brand_id, psd.status, ")
+				.append("psd.price, psd.rating, psd.review_count, psd.created_at, psd.updated_at ")
+				.append("FROM ").append(PRODUCT_SEARCH_DOCUMENTS_TABLE).append(" psd ")
+				.append("WHERE 1 = 1 ");
+
+		appendFilter(sql, params, "psd.category_id", "categoryId", request.getCategoryId());
+		appendFilter(sql, params, "psd.brand_id", "brandId", request.getBrandId());
+		appendFilter(sql, params, "psd.status", "status", request.getStatus() == null ? null : request.getStatus().name());
+
+		if (request.getMinPrice() != null) {
+			sql.append("AND psd.price >= :minPrice ");
+			params.put("minPrice", request.getMinPrice());
+		}
+		if (request.getMaxPrice() != null) {
+			sql.append("AND psd.price <= :maxPrice ");
+			params.put("maxPrice", request.getMaxPrice());
+		}
+
+		appendOptionSignatureFilter(sql, params, request);
+
+		sql.append(denormalizedOrderBy(request.getSort()));
 		sql.append(" LIMIT :limit OFFSET :offset");
 		params.put("limit", request.getLimit());
 		params.put("offset", request.getOffset());
@@ -135,12 +168,66 @@ public class ProductSearchRepository {
 		sql.append(") ");
 	}
 
+	private static void appendOptionSignatureFilter(
+			StringBuilder sql,
+			Map<String, Object> params,
+			ProductSearchRequest request
+	) {
+		String color = request.getColor() == null ? null : request.getColor().name();
+		String size = request.getSize() == null ? null : request.getSize().name();
+		String stockStatus = request.getStockStatus() == null ? null : request.getStockStatus().name();
+		int optionFilterCount = (color == null ? 0 : 1) + (size == null ? 0 : 1) + (stockStatus == null ? 0 : 1);
+
+		if (optionFilterCount == 0) {
+			return;
+		}
+
+		if (optionFilterCount == 3) {
+			sql.append("AND psd.option_signatures @> ARRAY[")
+					.append("make_product_option_signature(:color, :size, :stockStatus)")
+					.append("] ");
+			params.put("color", color);
+			params.put("size", size);
+			params.put("stockStatus", stockStatus);
+			return;
+		}
+
+		sql.append("AND EXISTS (")
+				.append("SELECT 1 FROM unnest(psd.option_signatures) AS option_signature ")
+				.append("WHERE 1 = 1 ");
+
+		if (color != null) {
+			sql.append("AND split_part(option_signature, '|', 1) = :color ");
+			params.put("color", color);
+		}
+		if (size != null) {
+			sql.append("AND split_part(option_signature, '|', 2) = :size ");
+			params.put("size", size);
+		}
+		if (stockStatus != null) {
+			sql.append("AND split_part(option_signature, '|', 3) = :stockStatus ");
+			params.put("stockStatus", stockStatus);
+		}
+
+		sql.append(") ");
+	}
+
 	private static String orderBy(String sort) {
 		return switch (sort) {
 			case "reviewCountDesc" -> "ORDER BY p.review_count DESC, p.id DESC";
 			case "priceAsc" -> "ORDER BY p.price ASC, p.id ASC";
 			case "priceDesc" -> "ORDER BY p.price DESC, p.id DESC";
 			case "createdAtDesc" -> "ORDER BY p.created_at DESC, p.id DESC";
+			default -> throw new IllegalArgumentException("Unsupported sort: " + sort);
+		};
+	}
+
+	private static String denormalizedOrderBy(String sort) {
+		return switch (sort) {
+			case "reviewCountDesc" -> "ORDER BY psd.review_count DESC, psd.product_id DESC";
+			case "priceAsc" -> "ORDER BY psd.price ASC, psd.product_id ASC";
+			case "priceDesc" -> "ORDER BY psd.price DESC, psd.product_id DESC";
+			case "createdAtDesc" -> "ORDER BY psd.created_at DESC, psd.product_id DESC";
 			default -> throw new IllegalArgumentException("Unsupported sort: " + sort);
 		};
 	}
