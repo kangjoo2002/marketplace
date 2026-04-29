@@ -64,20 +64,40 @@ PRIMARY KEY (product_id)
 Minimum read-table columns:
 
 - `product_id`
+- `seller_id`
 - `category_id`
 - `brand_id`
 - `status`
 - `price`
+- `rating`
 - `created_at`
+- `updated_at`
 - `review_count`
 - `option_signatures`
 - `source_updated_at`
 - `document_refreshed_at`
 
+The read table includes API response compatibility fields so the next
+Denormalized DB API PR can preserve the existing `ProductSearchItemResponse`
+shape without a read-time join back to `products_moderate_skew`:
+
+- `product_id` maps to `id`
+- `seller_id` maps to `sellerId`
+- `category_id` maps to `categoryId`
+- `brand_id` maps to `brandId`
+- `status` maps to `status`
+- `price` maps to `price`
+- `rating` maps to `rating`
+- `review_count` maps to `reviewCount`
+- `created_at` maps to `createdAt`
+- `updated_at` maps to `updatedAt`
+
 Repository schema adaptation:
 
 - `product_options_moderate_skew` does not have `updated_at`.
-- `source_updated_at` is populated from `products_moderate_skew.updated_at`.
+- `updated_at` is copied from `products_moderate_skew.updated_at` for API response compatibility.
+- `source_updated_at` is also populated from `products_moderate_skew.updated_at` as source freshness/fingerprint metadata.
+- `document_refreshed_at` records the read-table rebuild time.
 - Dataset fingerprint SQL records `max_option_updated_at` as `NULL` with a note.
 
 ## Option Signature Model
@@ -224,9 +244,10 @@ The backfill script:
 5. Drops candidate read-table indexes before rebuild.
 6. Truncates the read table.
 7. Inserts one row per product using `array_agg(DISTINCT option_signature)`.
-8. Recreates candidate indexes.
-9. Runs `ANALYZE product_search_documents_moderate_skew`.
-10. Records timing, sizes, index definitions, and dataset fingerprint output.
+8. Copies `seller_id`, `rating`, and `updated_at` from `products_moderate_skew` so a later API endpoint can preserve `ProductSearchItemResponse` without rejoining `products_moderate_skew`.
+9. Recreates candidate indexes.
+10. Runs `ANALYZE product_search_documents_moderate_skew`.
+11. Records timing, sizes, index definitions, and dataset fingerprint output.
 
 ## Validation Procedure
 
@@ -235,6 +256,7 @@ Validation is split into section-level actions. Run only the section you intend 
 ```powershell
 .\db\experiments\a1-product-search-denormalized-read-table\run-product-search-documents-moderate-skew.ps1 -Action validate-cheap
 .\db\experiments\a1-product-search-denormalized-read-table\run-product-search-documents-moderate-skew.ps1 -Action validate-product-id-set
+.\db\experiments\a1-product-search-denormalized-read-table\run-product-search-documents-moderate-skew.ps1 -Action validate-api-fields
 .\db\experiments\a1-product-search-denormalized-read-table\run-product-search-documents-moderate-skew.ps1 -Action validate-signature-count
 .\db\experiments\a1-product-search-denormalized-read-table\run-product-search-documents-moderate-skew.ps1 -Action validate-equivalence-b1
 .\db\experiments\a1-product-search-denormalized-read-table\run-product-search-documents-moderate-skew.ps1 -Action validate-equivalence-b2
@@ -257,6 +279,7 @@ Validation checks:
 |---|---|
 | `validate-cheap` | source/read row count, primary-key one-row-per-product enforcement, products without options, `option_signatures` null/empty count, delimiter collision count, table/index sizes, dataset fingerprint, `ANALYZE` status, SQL-shape assertion requiring manual review |
 | `validate-product-id-set` | source/read product-id missing/extra examples and summary counts |
+| `validate-api-fields` | `seller_id`, `rating`, and `updated_at` null counts and mismatch counts against `products_moderate_skew` |
 | `validate-signature-count` | source distinct option combination count vs read-table signature count |
 | `validate-equivalence-b1` | B1 page ID equivalence at offset `100` |
 | `validate-equivalence-b2` | B2 page ID equivalence at offset `100` |
@@ -312,6 +335,7 @@ Possible files:
 product_search_documents_moderate_skew_backfill_<timestamp>.txt
 product_search_documents_moderate_skew_validate_cheap_<timestamp>.txt
 product_search_documents_moderate_skew_validate_product_id_set_<timestamp>.txt
+product_search_documents_moderate_skew_validate_api_fields_<timestamp>.txt
 product_search_documents_moderate_skew_validate_signature_count_<timestamp>.txt
 product_search_documents_moderate_skew_validate_equivalence_b1_<timestamp>.txt
 product_search_documents_moderate_skew_validate_equivalence_b2_<timestamp>.txt

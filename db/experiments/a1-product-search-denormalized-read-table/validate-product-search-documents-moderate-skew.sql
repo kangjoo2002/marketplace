@@ -10,6 +10,7 @@
 
 \ir validate-product-search-documents-moderate-skew-cheap.sql
 \ir validate-product-search-documents-moderate-skew-product-id-set.sql
+\ir validate-product-search-documents-moderate-skew-api-fields.sql
 \ir validate-product-search-documents-moderate-skew-signature-count.sql
 \ir validate-product-search-documents-moderate-skew-equivalence-b1.sql
 \ir validate-product-search-documents-moderate-skew-equivalence-b2.sql

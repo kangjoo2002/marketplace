@@ -4,6 +4,7 @@ param(
         "explain",
         "validate-cheap",
         "validate-product-id-set",
+        "validate-api-fields",
         "validate-signature-count",
         "validate-equivalence-b1",
         "validate-equivalence-b2",
@@ -32,6 +33,10 @@ $validationActions = [ordered]@{
     "validate-product-id-set" = @{
         SqlPath = Join-Path $experimentDir "validate-product-search-documents-moderate-skew-product-id-set.sql"
         OutputName = "product_search_documents_moderate_skew_validate_product_id_set"
+    }
+    "validate-api-fields" = @{
+        SqlPath = Join-Path $experimentDir "validate-product-search-documents-moderate-skew-api-fields.sql"
+        OutputName = "product_search_documents_moderate_skew_validate_api_fields"
     }
     "validate-signature-count" = @{
         SqlPath = Join-Path $experimentDir "validate-product-search-documents-moderate-skew-signature-count.sql"

@@ -29,7 +29,7 @@ END $$;
 \echo source_schema_adaptation
 
 SELECT
-    'product_options_moderate_skew has no updated_at column in this repository; source_updated_at uses products_moderate_skew.updated_at only.' AS note;
+    'product_options_moderate_skew has no updated_at column in this repository; updated_at and source_updated_at use products_moderate_skew.updated_at.' AS note;
 
 \echo helper_function
 
@@ -50,16 +50,30 @@ $$;
 
 CREATE TABLE IF NOT EXISTS product_search_documents_moderate_skew (
     product_id BIGINT PRIMARY KEY,
+    seller_id BIGINT NOT NULL,
     category_id BIGINT NOT NULL,
     brand_id BIGINT NOT NULL,
     status VARCHAR(20) NOT NULL,
     price INTEGER NOT NULL,
+    rating NUMERIC(3,2) NOT NULL,
     created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
     review_count INTEGER NOT NULL,
     option_signatures TEXT[] NOT NULL,
     source_updated_at TIMESTAMP NOT NULL,
     document_refreshed_at TIMESTAMPTZ NOT NULL
 );
+
+\echo read_table_schema_compatibility_columns
+
+ALTER TABLE product_search_documents_moderate_skew
+    ADD COLUMN IF NOT EXISTS seller_id BIGINT;
+
+ALTER TABLE product_search_documents_moderate_skew
+    ADD COLUMN IF NOT EXISTS rating NUMERIC(3,2);
+
+ALTER TABLE product_search_documents_moderate_skew
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP;
 
 \echo pre_backfill_validation
 
@@ -91,11 +105,14 @@ TRUNCATE TABLE product_search_documents_moderate_skew;
 
 INSERT INTO product_search_documents_moderate_skew (
     product_id,
+    seller_id,
     category_id,
     brand_id,
     status,
     price,
+    rating,
     created_at,
+    updated_at,
     review_count,
     option_signatures,
     source_updated_at,
@@ -103,11 +120,14 @@ INSERT INTO product_search_documents_moderate_skew (
 )
 SELECT
     p.id AS product_id,
+    p.seller_id,
     p.category_id,
     p.brand_id,
     p.status,
     p.price,
+    p.rating,
     p.created_at,
+    p.updated_at,
     p.review_count,
     array_agg(DISTINCT sig.option_signature ORDER BY sig.option_signature) AS option_signatures,
     p.updated_at AS source_updated_at,
@@ -127,13 +147,22 @@ WHERE po.color IS NOT NULL
   AND po.stock_status IS NOT NULL
 GROUP BY
     p.id,
+    p.seller_id,
     p.category_id,
     p.brand_id,
     p.status,
     p.price,
+    p.rating,
     p.created_at,
-    p.review_count,
-    p.updated_at;
+    p.updated_at,
+    p.review_count;
+
+\echo enforce_api_field_not_null
+
+ALTER TABLE product_search_documents_moderate_skew
+    ALTER COLUMN seller_id SET NOT NULL,
+    ALTER COLUMN rating SET NOT NULL,
+    ALTER COLUMN updated_at SET NOT NULL;
 
 \echo candidate_indexes
 
@@ -227,6 +256,7 @@ SELECT
     COUNT(*) AS read_table_count,
     MIN(product_id) AS min_read_product_id,
     MAX(product_id) AS max_read_product_id,
+    MAX(updated_at) AS max_read_updated_at,
     MAX(source_updated_at) AS max_source_updated_at,
     MAX(document_refreshed_at) AS max_document_refreshed_at
 FROM product_search_documents_moderate_skew;

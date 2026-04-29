@@ -10,23 +10,36 @@ product_search_documents_moderate_skew
 
 Scope is `moderate_skew` only.
 
-This PR does not claim production-ready denormalization or real-time freshness.
-It validates a PostgreSQL-internal read model for the moderate_skew benchmark profile only.
+The read table was reworked before the API PR so the denormalized DB endpoint can later preserve `ProductSearchItemResponse` without rejoining `products_moderate_skew` at read time.
 
-The success criteria are result equivalence with the normalized source query,
-removal of read-time JOIN/EXISTS from the search path, documented query-plan behavior,
-and documented rebuild/freshness/rollback limitations.
+This PR does not add an API endpoint, k6 benchmark, OpenSearch code, Redis/cache, outbox, CDC, worker, trigger, or real-time synchronization mechanism.
 
-Sort elimination and p95 improvement are expected outcomes to observe, not required success criteria.
+This PR does not claim production-ready denormalization, real-time freshness, API p95 improvement, throughput improvement, OpenSearch replacement, or production capacity.
 
-## Repository Schema Adaptation
+## API Response Field Coverage
 
-`product_options_moderate_skew` has no `updated_at` column in this repository.
+The read table includes the fields needed to map the existing API item shape later:
 
-Adaptation:
+| read table field | later API field |
+|---|---|
+| `product_id` | `id` |
+| `seller_id` | `sellerId` |
+| `category_id` | `categoryId` |
+| `brand_id` | `brandId` |
+| `status` | `status` |
+| `price` | `price` |
+| `rating` | `rating` |
+| `review_count` | `reviewCount` |
+| `created_at` | `createdAt` |
+| `updated_at` | `updatedAt` |
 
-- `source_updated_at` is populated from `products_moderate_skew.updated_at`.
-- `max_option_updated_at` is reported as `NULL` with a note in dataset fingerprint output.
+Added compatibility fields:
+
+- `seller_id BIGINT NOT NULL`
+- `rating NUMERIC(3,2) NOT NULL`
+- `updated_at TIMESTAMP NOT NULL`
+
+`updated_at` is copied from `products_moderate_skew.updated_at` for API response compatibility. `source_updated_at` is also copied from `products_moderate_skew.updated_at` because `product_options_moderate_skew` has no `updated_at` column. `document_refreshed_at` records the read-table rebuild time.
 
 ## Option Signature Rule
 
@@ -44,11 +57,6 @@ BLACK|M|IN_STOCK
 
 The helper function is `make_product_option_signature(TEXT, TEXT, TEXT)`.
 
-Delimiter assumption:
-
-- `|` is reserved as the delimiter.
-- Validation checks `color`, `size`, and `stock_status` for delimiter collisions.
-
 Separate `colors[]`, `sizes[]`, and `stock_statuses[]` arrays are intentionally not used because they can create false positives when values come from different option rows.
 
 ## Products Without Options Policy
@@ -61,81 +69,68 @@ The benchmark seed generates at least one option per product, so backfill uses a
 products_without_options = 0
 ```
 
-This is a benchmark-profile assumption. It is not a production data model claim.
+This is a benchmark-profile assumption, not a production data model claim.
 
 ## Result Files
 
-One successful backfill artifact was generated:
+Old result artifacts from the incomplete read-table schema were removed before the corrected runs. Current successful artifacts:
 
 ```text
-results/20260429_124709/product_search_documents_moderate_skew_backfill_20260429_124709.txt
-```
-
-Interrupted validation artifacts were removed because the command did not finish successfully.
-
-Successful section-level validation artifacts:
-
-```text
-results/20260429_135038/product_search_documents_moderate_skew_validate_cheap_20260429_135038.txt
-results/20260429_135121/product_search_documents_moderate_skew_validate_product_id_set_20260429_135121.txt
-results/20260429_135141/product_search_documents_moderate_skew_validate_equivalence_b1_20260429_135141.txt
-results/20260429_135152/product_search_documents_moderate_skew_validate_equivalence_b2_20260429_135152.txt
-results/20260429_135201/product_search_documents_moderate_skew_validate_equivalence_b3_20260429_135201.txt
-results/20260429_140137/product_search_documents_moderate_skew_validate_signature_count_20260429_140137.txt
-results/20260429_140303/product_search_documents_moderate_skew_explain_20260429_140303.txt
-```
-
-Future successful artifacts should be recorded under:
-
-```text
-results/<YYYYMMDD_HHMMSS>/
+results/20260429_144356/product_search_documents_moderate_skew_backfill_20260429_144356.txt
+results/20260429_144653/product_search_documents_moderate_skew_validate_cheap_20260429_144653.txt
+results/20260429_144718/product_search_documents_moderate_skew_validate_product_id_set_20260429_144718.txt
+results/20260429_144737/product_search_documents_moderate_skew_validate_api_fields_20260429_144737.txt
+results/20260429_144823/product_search_documents_moderate_skew_validate_signature_count_20260429_144823.txt
+results/20260429_144928/product_search_documents_moderate_skew_validate_equivalence_b1_20260429_144928.txt
+results/20260429_144942/product_search_documents_moderate_skew_validate_equivalence_b2_20260429_144942.txt
+results/20260429_144947/product_search_documents_moderate_skew_validate_equivalence_b3_20260429_144947.txt
+results/20260429_144957/product_search_documents_moderate_skew_explain_20260429_144957.txt
 ```
 
 ## Backfill Result
 
 | field | value |
 |---|---|
-| backfill started_at | `2026-04-29 03:47:24.738709+00` |
-| backfill finished_at | `2026-04-29 03:49:46.959754+00` |
-| backfill duration | `00:02:22.221045` |
+| backfill started_at | `2026-04-29 05:44:10.314271+00` |
+| backfill finished_at | `2026-04-29 05:46:40.158243+00` |
+| backfill duration | `00:02:29.843972` |
 | backfilled rows | `10000000` |
-| backfill rows/sec | `70313.08` |
-| ANALYZE executed_at | `2026-04-29 03:49:46.425823+00` |
+| backfill rows/sec | `66736.08` |
+| ANALYZE executed_at | `2026-04-29 05:46:39.521126+00` |
 
 ## Validation Result
 
 Required section-level validation completed. `validate-all` and multi-offset equivalence were intentionally not run.
 
-The validation SQL has been refactored after the interrupted run:
-
-- missing/extra product-id sets are materialized once into temporary tables and reused for examples and counts.
-- signature-count mismatches are materialized once into a temporary table and reused for examples and counts.
-- B1, B2, and B3 equivalence checks are split into explicit query blocks with fixed deterministic ordering.
-- default equivalence checks remain limited to B1 offset `100`, B2 offset `100`, and B3 offset `10000`.
-- `statement_timeout = '10min'` is set to avoid another indefinite local run.
-- the runner now exposes explicit actions: `validate-cheap`, `validate-product-id-set`, `validate-signature-count`, `validate-equivalence-b1`, `validate-equivalence-b2`, `validate-equivalence-b3`, and `validate-all`.
-
-Only completed actions are recorded below.
-
 | check | result |
 |---|---|
-| source/read row count match | `true`; products count `10000000`, read table count `10000000` from `validate-cheap` |
-| one row per product enforcement | primary key `product_search_documents_moderate_skew_pkey`, `PRIMARY KEY (product_id)` from `validate-cheap` |
-| source/read product_id set match | `true`; missing_from_read_count `0`, extra_in_read_count `0` from `validate-product-id-set` |
-| duplicate product_id | enforced by primary key; duplicate count query not run as a separate full scan |
-| products_without_options | `0` from `validate-cheap` |
+| source/read row count match | `true`; products count `10000000`, read table count `10000000` |
+| one row per product enforcement | primary key `product_search_documents_moderate_skew_pkey`, `PRIMARY KEY (product_id)` |
+| source/read product_id set match | `true`; missing_from_read_count `0`, extra_in_read_count `0` |
+| products_without_options | `0` |
 | chosen products_without_options policy | Option A |
-| option_signatures null count | `0` from `validate-cheap` |
-| option_signatures empty count | `0` from `validate-cheap` |
-| delimiter collision count | `0` from `validate-cheap` |
-| signature_count_mismatch | `0` from standalone `validate-signature-count` |
+| option_signatures null count | `0` |
+| option_signatures empty count | `0` |
+| delimiter collision count | `0` |
+| signature_count_mismatch | `0` |
 | B1 equivalence | `ids_match = true`, source_page_count `50`, read_page_count `50`, offset `100` |
 | B2 equivalence | `ids_match = true`, source_page_count `50`, read_page_count `50`, offset `100` |
 | B3 equivalence | `ids_match = true`, source_page_count `50`, read_page_count `50`, offset `10000` |
-| multi-offset equivalence | Not run; removed from default validation as not feasible in this local run |
 | validate-all | Not run |
+| multi-offset equivalence | Not run |
 
-The `validate-signature-count` section was run separately because it is the heaviest validation section. It groups `product_options_moderate_skew` by `product_id` across the 20.5M-row option table and compares source distinct option-combination counts with read-table `option_signatures` cardinality. The section completed successfully in `01:03.039` for the mismatch materialization query and returned `signature_count_mismatch = 0`.
+API response field coverage validation:
+
+| check | value |
+|---|---:|
+| seller_id_null_count | 0 |
+| rating_null_count | 0 |
+| updated_at_null_count | 0 |
+| seller_id_mismatch_count | 0 |
+| rating_mismatch_count | 0 |
+| updated_at_mismatch_count | 0 |
+
+The mismatch examples query returned 0 rows.
 
 ## Query Shape Observation
 
@@ -153,23 +148,23 @@ option_signatures @> ARRAY[make_product_option_signature(...)]
 
 They do not include a read-time `JOIN` to `product_options_moderate_skew` and do not include a read-time `EXISTS` subquery.
 
-The `validate-cheap` artifact records this as `SQL_SHAPE_ASSERTION` with `verification_type = manual_review_required`. It is a SQL-shape assertion, not a database-executed proof of plan behavior. Plan behavior is recorded in the EXPLAIN Summary section below.
+The `validate-cheap` artifact records this as `SQL_SHAPE_ASSERTION` with `verification_type = manual_review_required`. It is a SQL-shape assertion, not a database-executed proof of plan behavior. Plan behavior is recorded in the EXPLAIN summary below.
 
 ## EXPLAIN Summary
 
-| scenario | read-time JOIN removed? | read-time EXISTS removed? | option GIN used? | scenario index used? | Sort behavior | residual filter | artifact |
-|---|---|---|---|---|---|---|---|
-| B1 | yes; no product_options join in the denormalized query or plan | yes; no product_options EXISTS/subplan in the denormalized query or plan | no; option predicate is a residual filter | `idx_psd_moderate_skew_active_cat_brand_review` | no `Sort` node observed; index order satisfies `review_count DESC, product_id DESC` | `price` range and `option_signatures @>` filter; Rows Removed by Filter `94` | `results/20260429_140303/product_search_documents_moderate_skew_explain_20260429_140303.txt` |
-| B2 | yes; no product_options join in the denormalized query or plan | yes; no product_options EXISTS/subplan in the denormalized query or plan | no; option predicate is a residual filter | `idx_psd_moderate_skew_active_created` | no `Sort` node observed; index order satisfies `created_at DESC, product_id DESC` | `option_signatures @>` filter; Rows Removed by Filter `540` | `results/20260429_140303/product_search_documents_moderate_skew_explain_20260429_140303.txt` |
-| B3 | yes; no product_options join in the denormalized query or plan | yes; no product_options EXISTS/subplan in the denormalized query or plan | no; option predicate is a residual filter | `idx_psd_moderate_skew_active_cat_brand_review` | no `Sort` node observed; index order satisfies `review_count DESC, product_id DESC` | `price` range and `option_signatures @>` filter; Rows Removed by Filter `6820` | `results/20260429_140303/product_search_documents_moderate_skew_explain_20260429_140303.txt` |
+| scenario | read-time JOIN removed? | read-time EXISTS removed? | option GIN used? | scenario index used? | Sort behavior | residual filter |
+|---|---|---|---|---|---|---|
+| B1 | yes; no product_options join in the denormalized query or plan | yes; no product_options EXISTS/subplan in the denormalized query or plan | no; option predicate is a residual filter | `idx_psd_moderate_skew_active_cat_brand_review` | no `Sort` node observed; index order satisfies `review_count DESC, product_id DESC` | `price` range and `option_signatures @>` filter; Rows Removed by Filter `94` |
+| B2 | yes; no product_options join in the denormalized query or plan | yes; no product_options EXISTS/subplan in the denormalized query or plan | no; option predicate is a residual filter | `idx_psd_moderate_skew_active_created` | no `Sort` node observed; index order satisfies `created_at DESC, product_id DESC` | `option_signatures @>` filter; Rows Removed by Filter `540` |
+| B3 | yes; no product_options join in the denormalized query or plan | yes; no product_options EXISTS/subplan in the denormalized query or plan | no; option predicate is a residual filter | `idx_psd_moderate_skew_active_cat_brand_review` | no `Sort` node observed; index order satisfies `review_count DESC, product_id DESC` | `price` range and `option_signatures @>` filter; Rows Removed by Filter `6820` |
 
 Additional EXPLAIN details:
 
 | scenario | scan shape | Bitmap Heap Scan / Recheck Cond | Planning Time | Execution Time | Buffers |
 |---|---|---|---:|---:|---|
-| B1 | `Index Scan using idx_psd_moderate_skew_active_cat_brand_review` | none observed | `5.827 ms` | `44.722 ms` | `shared hit=6 read=249` |
-| B2 | `Index Scan using idx_psd_moderate_skew_active_created` | none observed | `0.172 ms` | `138.563 ms` | `shared hit=16 read=679` |
-| B3 | `Index Scan using idx_psd_moderate_skew_active_cat_brand_review` | none observed | `0.256 ms` | `1895.927 ms` | `shared hit=4031 read=12944` |
+| B1 | `Index Scan using idx_psd_moderate_skew_active_cat_brand_review` | none observed | `1.449 ms` | `1.791 ms` | `shared hit=6 read=249` |
+| B2 | `Index Scan using idx_psd_moderate_skew_active_created` | none observed | `0.297 ms` | `6.471 ms` | `shared hit=14 read=681` |
+| B3 | `Index Scan using idx_psd_moderate_skew_active_cat_brand_review` | none observed | `1.963 ms` | `96.187 ms` | `shared hit=280 read=16695` |
 
 Do not compare EXPLAIN Execution Time to API p95.
 
@@ -177,9 +172,9 @@ Do not compare EXPLAIN Execution Time to API p95.
 
 | relation | size |
 |---|---:|
-| product_search_documents_moderate_skew table | `1601 MB` |
+| product_search_documents_moderate_skew table | `1832 MB` |
 | product_search_documents_moderate_skew indexes | `946 MB` |
-| product_search_documents_moderate_skew total | `2547 MB` |
+| product_search_documents_moderate_skew total | `2779 MB` |
 | products_moderate_skew table | `965 MB` |
 | product_options_moderate_skew table | `1308 MB` |
 
@@ -188,7 +183,6 @@ Do not compare EXPLAIN Execution Time to API p95.
 | field | value |
 |---|---|
 | profile | moderate_skew |
-| seed version or generation commit hash | Not recorded by existing seed tables |
 | products count | `10000000` |
 | product_options count | `20500000` |
 | read table count | `10000000` |
@@ -196,29 +190,9 @@ Do not compare EXPLAIN Execution Time to API p95.
 | max product id | `10000000` |
 | max product updated_at | `2026-04-24 09:12:36.160229` |
 | max option updated_at | Not available; source table has no updated_at |
+| max read updated_at | `2026-04-24 09:12:36.160229` |
 | max source_updated_at | `2026-04-24 09:12:36.160229` |
-| max document_refreshed_at | `2026-04-29 03:47:24.757725+00` |
-| artifact timestamp | `20260429_124709` |
-
-## Drop / Rebuild Command
-
-Rebuild:
-
-```powershell
-.\db\experiments\a1-product-search-denormalized-read-table\run-product-search-documents-moderate-skew.ps1 -Action backfill
-```
-
-Drop experiment objects:
-
-```powershell
-docker compose exec postgres psql -U readpath -d readpath_lab -c "DROP TABLE IF EXISTS product_search_documents_moderate_skew; DROP FUNCTION IF EXISTS make_product_option_signature(TEXT, TEXT, TEXT);"
-```
-
-## Rollback Note
-
-This PR does not modify API behavior, baseline API behavior, DB tuned API behavior, k6 scripts, OpenSearch, Redis, outbox, CDC, or worker code.
-
-Rollback is limited to dropping the read table and helper function above.
+| max document_refreshed_at | `2026-04-29 05:44:10.344209+00` |
 
 ## Freshness / Rebuild Limitation
 
@@ -228,70 +202,63 @@ No trigger, outbox, CDC, relay, worker, queue, API write-path hook, or real-time
 
 ## Commands Run
 
-Branch setup:
+Git recovery:
 
 ```powershell
-git switch main
+git branch --show-current
+git status --short
+git log --oneline --decorate --graph -n 20
+git branch --all --verbose
+git remote -v
 git pull --ff-only
-git switch -c feature/product-search-denormalized-read-table
+git show --no-patch --pretty=fuller ea00f83
+git reset --hard 3607df1
+git push --force-with-lease origin main
+git switch feature/product-search-denormalized-read-table
 ```
 
-Repository inspection commands were run with `rg`, `Get-Content`, and `docker compose ps`.
-
-Backfill command:
+Artifact cleanup:
 
 ```powershell
-.\db\experiments\a1-product-search-denormalized-read-table\run-product-search-documents-moderate-skew.ps1
+Remove-Item ...\db\experiments\a1-product-search-denormalized-read-table\results\<old timestamp dirs> -Recurse -Force
 ```
 
-Follow-up spot checks:
+Section-level DB actions:
 
 ```powershell
-docker compose exec -T postgres psql -U readpath -d readpath_lab -c "SELECT COUNT(*) AS read_table_count FROM product_search_documents_moderate_skew; SELECT COUNT(*) AS products_without_options FROM products_moderate_skew p LEFT JOIN product_options_moderate_skew po ON po.product_id=p.id WHERE po.product_id IS NULL; SELECT COUNT(*) AS delimiter_collision_count FROM product_options_moderate_skew WHERE color::text LIKE '%|%' OR size::text LIKE '%|%' OR stock_status::text LIKE '%|%';"
-```
-
-Section-level validation commands:
-
-```powershell
+.\db\experiments\a1-product-search-denormalized-read-table\run-product-search-documents-moderate-skew.ps1 -Action backfill
 .\db\experiments\a1-product-search-denormalized-read-table\run-product-search-documents-moderate-skew.ps1 -Action validate-cheap
 .\db\experiments\a1-product-search-denormalized-read-table\run-product-search-documents-moderate-skew.ps1 -Action validate-product-id-set
+.\db\experiments\a1-product-search-denormalized-read-table\run-product-search-documents-moderate-skew.ps1 -Action validate-api-fields
+.\db\experiments\a1-product-search-denormalized-read-table\run-product-search-documents-moderate-skew.ps1 -Action validate-signature-count
 .\db\experiments\a1-product-search-denormalized-read-table\run-product-search-documents-moderate-skew.ps1 -Action validate-equivalence-b1
 .\db\experiments\a1-product-search-denormalized-read-table\run-product-search-documents-moderate-skew.ps1 -Action validate-equivalence-b2
 .\db\experiments\a1-product-search-denormalized-read-table\run-product-search-documents-moderate-skew.ps1 -Action validate-equivalence-b3
-.\db\experiments\a1-product-search-denormalized-read-table\run-product-search-documents-moderate-skew.ps1 -Action validate-signature-count
 .\db\experiments\a1-product-search-denormalized-read-table\run-product-search-documents-moderate-skew.ps1 -Action explain
 ```
 
-## Commands Not Run And Why
+## Commands Not Run
 
-Earlier interrupted command:
-
-- The initial monolithic validation SQL was started and canceled because the multi-offset equivalence query was too heavy for this local run.
-
-Intentionally not run:
-
-- `validate-all` was not run.
+- `validate-all`
 - multi-offset equivalence
-
 - k6 smoke
 - k6 warm-up
 - k6 measured run
 - API endpoint tests for a denormalized API
 - OpenSearch commands
 - Redis commands
-- outbox/CDC worker commands
-
-Forbidden by PR scope and not run:
-
+- outbox/CDC/worker commands
 - production migration commands
 
 ## Exclusions Confirmed
 
 No API endpoint was added.
 
+No controller, service, repository, request DTO, response DTO, or page/item response class was modified.
+
 No k6 benchmark was added or run.
 
-No OpenSearch, Redis, outbox, CDC, relay, worker, or real-time sync mechanism was added.
+No OpenSearch, Redis, outbox, CDC, relay, worker, trigger, or real-time sync mechanism was added.
 
 No uniform or high_skew read table was added.
 
