@@ -21,4 +21,9 @@ public class ProductSearchController {
 	public ProductSearchResponse search(@Valid @ModelAttribute ProductSearchRequest request) {
 		return productSearchService.search(request);
 	}
+
+	@GetMapping("/search/db-tuned")
+	public ProductSearchResponse searchDbTuned(@Valid @ModelAttribute ProductSearchRequest request) {
+		return productSearchService.searchDbTuned(request);
+	}
 }

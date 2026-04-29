@@ -58,4 +58,45 @@ class ProductSearchRepositoryTest {
 		assertThat(sql).contains("LIMIT :limit OFFSET :offset");
 		assertThat(sql).doesNotContainIgnoringCase("exists");
 	}
+
+	@Test
+	void searchDbTunedUsesExistsWithoutDistinctAndKeepsOffsetShape() {
+		NamedParameterJdbcTemplate jdbcTemplate = mock(NamedParameterJdbcTemplate.class);
+		ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+		when(jdbcTemplate.query(
+				sqlCaptor.capture(),
+				anyMap(),
+				ArgumentMatchers.<RowMapper<ProductSearchItemResponse>>any()
+		)).thenReturn(List.<ProductSearchItemResponse>of());
+
+		ProductSearchBaselineProperties properties = new ProductSearchBaselineProperties();
+		ProductSearchRepository repository = new ProductSearchRepository(jdbcTemplate, properties);
+
+		ProductSearchRequest request = new ProductSearchRequest();
+		request.setCategoryId(75L);
+		request.setBrandId(943L);
+		request.setStatus(ProductStatus.ACTIVE);
+		request.setMinPrice(10000);
+		request.setMaxPrice(100000);
+		request.setColor(ProductColor.BLACK);
+		request.setSize(ProductSize.M);
+		request.setStockStatus(StockStatus.IN_STOCK);
+		request.setSort("reviewCountDesc");
+		request.setLimit(50);
+		request.setOffset(10000);
+
+		repository.searchDbTuned(request);
+
+		String sql = sqlCaptor.getValue();
+		assertThat(sql).doesNotContain("SELECT DISTINCT");
+		assertThat(sql).contains("FROM products_moderate_skew p");
+		assertThat(sql).doesNotContain("JOIN product_options_moderate_skew");
+		assertThat(sql).contains("EXISTS (SELECT 1 FROM product_options_moderate_skew po");
+		assertThat(sql).contains("po.product_id = p.id");
+		assertThat(sql).contains("AND po.color = :color");
+		assertThat(sql).contains("AND po.size = :size");
+		assertThat(sql).contains("AND po.stock_status = :stockStatus");
+		assertThat(sql).contains("ORDER BY p.review_count DESC, p.id DESC");
+		assertThat(sql).contains("LIMIT :limit OFFSET :offset");
+	}
 }

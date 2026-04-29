@@ -1,0 +1,577 @@
+{
+  "benchmark": {
+    "scenarioSetName": "product-search-baseline-v1",
+    "workloadVersion": "product-search-baseline-v1",
+    "profile": "moderate_skew",
+    "baseUrl": "http://localhost:8080",
+    "vus": 10,
+    "duration": "10m",
+    "smokeOnly": false,
+    "readPath": "DB tuned API",
+    "endpoint": "/api/v1/products/search/db-tuned",
+    "queryShape": "PostgreSQL products + product_options EXISTS option filtering, no SELECT DISTINCT, OFFSET pagination",
+    "tablePair": {
+      "products": "products_moderate_skew",
+      "productOptions": "product_options_moderate_skew"
+    },
+    "selectedIndexes": [
+      "idx_products_moderate_skew_active_cat_brand_review",
+      "idx_products_moderate_skew_active_created",
+      "idx_product_options_moderate_skew_color_size_stock_product"
+    ],
+    "notes": [
+      "Selected indexes + EXISTS combined DB tuned path, not EXISTS-only improvement.",
+      "B1/B3 price remains a residual products filter by design.",
+      "PROFILE is k6 metadata/tagging only; Spring application properties select the API table pair."
+    ]
+  },
+  "requestScenarios": [
+    {
+      "name": "B1_selective_option_filter",
+      "weight": 40,
+      "purpose": "Selective category and brand product search with price and option filters.",
+      "params": {
+        "categoryId": "75",
+        "brandId": "943",
+        "status": "ACTIVE",
+        "minPrice": "10000",
+        "maxPrice": "100000",
+        "color": "BLACK",
+        "size": "M",
+        "stockStatus": "IN_STOCK",
+        "sort": "reviewCountDesc",
+        "limit": "50",
+        "offset": "100"
+      }
+    },
+    {
+      "name": "B2_broad_active_option_filter",
+      "weight": 40,
+      "purpose": "Broad active-product option filter with latest-created ordering.",
+      "params": {
+        "status": "ACTIVE",
+        "color": "BLACK",
+        "size": "M",
+        "stockStatus": "IN_STOCK",
+        "sort": "createdAtDesc",
+        "limit": "50",
+        "offset": "100"
+      }
+    },
+    {
+      "name": "B3_deep_offset_option_filter",
+      "weight": 20,
+      "purpose": "Deeper page of the same selective category and brand product search as B1.",
+      "params": {
+        "categoryId": "75",
+        "brandId": "943",
+        "status": "ACTIVE",
+        "minPrice": "10000",
+        "maxPrice": "100000",
+        "color": "BLACK",
+        "size": "M",
+        "stockStatus": "IN_STOCK",
+        "sort": "reviewCountDesc",
+        "limit": "50",
+        "offset": "10000"
+      }
+    }
+  ],
+  "summary": {
+    "root_group": {
+      "name": "",
+      "path": "",
+      "id": "d41d8cd98f00b204e9800998ecf8427e",
+      "groups": [],
+      "checks": [
+          {
+            "passes": 12457,
+            "fails": 0,
+            "name": "B1_selective_option_filter: HTTP 200",
+            "path": "::B1_selective_option_filter: HTTP 200",
+            "id": "5caed2f71686e396b6b450c39f8b6b1a"
+          },
+          {
+            "name": "B1_selective_option_filter: items is an array",
+            "path": "::B1_selective_option_filter: items is an array",
+            "id": "58b1cbb4c542fa4d0ad74f604016dd09",
+            "passes": 12457,
+            "fails": 0
+          },
+          {
+            "name": "B1_selective_option_filter: items length equals limit",
+            "path": "::B1_selective_option_filter: items length equals limit",
+            "id": "b930d1e67a683e5bb7a53c5e02a069f4",
+            "passes": 12457,
+            "fails": 0
+          },
+          {
+            "name": "B1_selective_option_filter: page exists",
+            "path": "::B1_selective_option_filter: page exists",
+            "id": "6c6b667830651bdf2d12778b1e158b63",
+            "passes": 12457,
+            "fails": 0
+          },
+          {
+            "name": "B1_selective_option_filter: page.limit matches request",
+            "path": "::B1_selective_option_filter: page.limit matches request",
+            "id": "438e19c24bc52021b4ae30465b5c8a08",
+            "passes": 12457,
+            "fails": 0
+          },
+          {
+            "passes": 12457,
+            "fails": 0,
+            "name": "B1_selective_option_filter: page.offset matches request",
+            "path": "::B1_selective_option_filter: page.offset matches request",
+            "id": "28897b0eacbed1f51fff4eb9a44b6beb"
+          },
+          {
+            "passes": 12457,
+            "fails": 0,
+            "name": "B1_selective_option_filter: returnedCount is a number",
+            "path": "::B1_selective_option_filter: returnedCount is a number",
+            "id": "810f0113b0e7d878e2e7f02a1723a693"
+          },
+          {
+            "path": "::B1_selective_option_filter: returnedCount > 0",
+            "id": "69ce0204fdd382668233dbbe5dff0a2b",
+            "passes": 12457,
+            "fails": 0,
+            "name": "B1_selective_option_filter: returnedCount > 0"
+          },
+          {
+            "name": "B1_selective_option_filter: returnedCount equals limit",
+            "path": "::B1_selective_option_filter: returnedCount equals limit",
+            "id": "bf48727972f862fce202b2762ed74cf9",
+            "passes": 12457,
+            "fails": 0
+          },
+          {
+            "name": "B1_selective_option_filter: returnedCount <= limit",
+            "path": "::B1_selective_option_filter: returnedCount <= limit",
+            "id": "5488623f030c9844c9579df80e4dc280",
+            "passes": 12457,
+            "fails": 0
+          },
+          {
+            "path": "::B2_broad_active_option_filter: HTTP 200",
+            "id": "992f2b682503675330903e883f6de1a4",
+            "passes": 12446,
+            "fails": 0,
+            "name": "B2_broad_active_option_filter: HTTP 200"
+          },
+          {
+            "name": "B2_broad_active_option_filter: items is an array",
+            "path": "::B2_broad_active_option_filter: items is an array",
+            "id": "fe53b1b09845fb245c9b9f69980cb432",
+            "passes": 12446,
+            "fails": 0
+          },
+          {
+            "id": "0b93ce5613e24d95ca95d0a47eb6fbeb",
+            "passes": 12446,
+            "fails": 0,
+            "name": "B2_broad_active_option_filter: items length equals limit",
+            "path": "::B2_broad_active_option_filter: items length equals limit"
+          },
+          {
+            "fails": 0,
+            "name": "B2_broad_active_option_filter: page exists",
+            "path": "::B2_broad_active_option_filter: page exists",
+            "id": "2fae671d7efa8054ba85337d8e7627cd",
+            "passes": 12446
+          },
+          {
+            "name": "B2_broad_active_option_filter: page.limit matches request",
+            "path": "::B2_broad_active_option_filter: page.limit matches request",
+            "id": "3657090faf2dc70ad7a0aee7d0b6e687",
+            "passes": 12446,
+            "fails": 0
+          },
+          {
+            "name": "B2_broad_active_option_filter: page.offset matches request",
+            "path": "::B2_broad_active_option_filter: page.offset matches request",
+            "id": "b67f0e5e60349d396d92cbfe47530a72",
+            "passes": 12446,
+            "fails": 0
+          },
+          {
+            "path": "::B2_broad_active_option_filter: returnedCount is a number",
+            "id": "c73769446ad9ff573867a614525c98ca",
+            "passes": 12446,
+            "fails": 0,
+            "name": "B2_broad_active_option_filter: returnedCount is a number"
+          },
+          {
+            "fails": 0,
+            "name": "B2_broad_active_option_filter: returnedCount > 0",
+            "path": "::B2_broad_active_option_filter: returnedCount > 0",
+            "id": "648259c9ca829b2967f714bc96687bae",
+            "passes": 12446
+          },
+          {
+            "name": "B2_broad_active_option_filter: returnedCount equals limit",
+            "path": "::B2_broad_active_option_filter: returnedCount equals limit",
+            "id": "f00ffafe558788074f0c1a412b4f617b",
+            "passes": 12446,
+            "fails": 0
+          },
+          {
+            "name": "B2_broad_active_option_filter: returnedCount <= limit",
+            "path": "::B2_broad_active_option_filter: returnedCount <= limit",
+            "id": "ebb2f74ecb987b5828e4d358d15c4cbf",
+            "passes": 12446,
+            "fails": 0
+          },
+          {
+            "id": "4492a3d2bd495e10761c2d3a2e5e736e",
+            "passes": 6223,
+            "fails": 0,
+            "name": "B3_deep_offset_option_filter: HTTP 200",
+            "path": "::B3_deep_offset_option_filter: HTTP 200"
+          },
+          {
+            "id": "7beca1f30b4e314383df047becd8df20",
+            "passes": 6223,
+            "fails": 0,
+            "name": "B3_deep_offset_option_filter: items is an array",
+            "path": "::B3_deep_offset_option_filter: items is an array"
+          },
+          {
+            "name": "B3_deep_offset_option_filter: items length equals limit",
+            "path": "::B3_deep_offset_option_filter: items length equals limit",
+            "id": "df9feee3073054fc00a68e7fd32db3f6",
+            "passes": 6223,
+            "fails": 0
+          },
+          {
+            "name": "B3_deep_offset_option_filter: page exists",
+            "path": "::B3_deep_offset_option_filter: page exists",
+            "id": "85ab0ef8427da4fbb102ae682e320341",
+            "passes": 6223,
+            "fails": 0
+          },
+          {
+            "passes": 6223,
+            "fails": 0,
+            "name": "B3_deep_offset_option_filter: page.limit matches request",
+            "path": "::B3_deep_offset_option_filter: page.limit matches request",
+            "id": "fcc494b061dc83398d194dc6c57e289a"
+          },
+          {
+            "path": "::B3_deep_offset_option_filter: page.offset matches request",
+            "id": "2ec6ddba61c68a4027c09548b66be846",
+            "passes": 6223,
+            "fails": 0,
+            "name": "B3_deep_offset_option_filter: page.offset matches request"
+          },
+          {
+            "name": "B3_deep_offset_option_filter: returnedCount is a number",
+            "path": "::B3_deep_offset_option_filter: returnedCount is a number",
+            "id": "528948b87b99fcdc713b290f20adee2b",
+            "passes": 6223,
+            "fails": 0
+          },
+          {
+            "name": "B3_deep_offset_option_filter: returnedCount > 0",
+            "path": "::B3_deep_offset_option_filter: returnedCount > 0",
+            "id": "5280c405039c3cb134962ebd2e0a1832",
+            "passes": 6223,
+            "fails": 0
+          },
+          {
+            "name": "B3_deep_offset_option_filter: returnedCount equals limit",
+            "path": "::B3_deep_offset_option_filter: returnedCount equals limit",
+            "id": "8228e9af6e8c63d5585e82dcf7953e20",
+            "passes": 6223,
+            "fails": 0
+          },
+          {
+            "fails": 0,
+            "name": "B3_deep_offset_option_filter: returnedCount <= limit",
+            "path": "::B3_deep_offset_option_filter: returnedCount <= limit",
+            "id": "8ec0dd3a6b96418f2f9316b1c7e0eb0e",
+            "passes": 6223
+          }
+        ]
+    },
+    "options": {
+      "summaryTrendStats": [
+        "avg",
+        "min",
+        "med",
+        "max",
+        "p(90)",
+        "p(95)"
+      ],
+      "summaryTimeUnit": "",
+      "noColor": false
+    },
+    "state": {
+      "isStdOutTTY": false,
+      "isStdErrTTY": false,
+      "testRunDurationMs": 600262.3996
+    },
+    "metrics": {
+      "vus_max": {
+        "values": {
+          "value": 10,
+          "min": 10,
+          "max": 10
+        },
+        "type": "gauge",
+        "contains": "default"
+      },
+      "http_req_receiving": {
+        "contains": "time",
+        "values": {
+          "max": 14.5236,
+          "p(90)": 0.57055,
+          "p(95)": 0.981125,
+          "avg": 0.2667531613442159,
+          "min": 0,
+          "med": 0
+        },
+        "type": "trend"
+      },
+      "b3_deep_offset_option_filter_returned_count": {
+        "type": "trend",
+        "contains": "default",
+        "values": {
+          "med": 50,
+          "max": 50,
+          "p(90)": 50,
+          "p(95)": 50,
+          "avg": 50,
+          "min": 50
+        }
+      },
+      "b1_selective_option_filter_duration": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "p(90)": 365.34425999999996,
+          "p(95)": 386.7013,
+          "avg": 310.18612084771553,
+          "min": 160.4418,
+          "med": 304.3926,
+          "max": 602.9534
+        }
+      },
+      "http_req_duration": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "p(95)": 370.313125,
+          "avg": 191.94770291717492,
+          "min": 7.1459,
+          "med": 269.71254999999996,
+          "max": 604.9383,
+          "p(90)": 344.2278
+        }
+      },
+      "data_sent": {
+        "type": "counter",
+        "contains": "data",
+        "values": {
+          "count": 7153010,
+          "rate": 11916.471870912768
+        }
+      },
+      "iteration_duration": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "avg": 192.82315946796584,
+          "min": 8.1753,
+          "med": 270.60775,
+          "max": 605.509,
+          "p(90)": 345.27015,
+          "p(95)": 371.0389
+        }
+      },
+      "b2_broad_active_option_filter_duration": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "min": 7.1459,
+          "med": 16.9118,
+          "max": 87.0231,
+          "p(90)": 29.03165,
+          "p(95)": 33.930324999999996,
+          "avg": 18.939613345653356
+        }
+      },
+      "vus": {
+        "type": "gauge",
+        "contains": "default",
+        "values": {
+          "value": 10,
+          "min": 10,
+          "max": 10
+        }
+      },
+      "b2_broad_active_option_filter_returned_count": {
+        "type": "trend",
+        "contains": "default",
+        "values": {
+          "p(95)": 50,
+          "avg": 50,
+          "min": 50,
+          "med": 50,
+          "max": 50,
+          "p(90)": 50
+        }
+      },
+      "http_req_failed": {
+        "type": "rate",
+        "contains": "default",
+        "values": {
+          "passes": 0,
+          "fails": 31126,
+          "rate": 0
+        },
+        "thresholds": {
+          "rate==0": {
+            "ok": true
+          }
+        }
+      },
+      "iterations": {
+        "type": "counter",
+        "contains": "default",
+        "values": {
+          "count": 31126,
+          "rate": 51.85398922328235
+        }
+      },
+      "b3_deep_offset_option_filter_duration": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "med": 291.0343,
+          "max": 604.9383,
+          "p(90)": 359.83122000000003,
+          "p(95)": 394.51556999999997,
+          "avg": 301.27804369275214,
+          "min": 187.1252
+        }
+      },
+      "checks": {
+        "type": "rate",
+        "contains": "default",
+        "values": {
+          "rate": 1,
+          "passes": 311260,
+          "fails": 0
+        },
+        "thresholds": {
+          "rate==1": {
+            "ok": true
+          }
+        }
+      },
+      "http_req_duration{expected_response:true}": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "avg": 191.94770291717492,
+          "min": 7.1459,
+          "med": 269.71254999999996,
+          "max": 604.9383,
+          "p(90)": 344.2278,
+          "p(95)": 370.313125
+        }
+      },
+      "http_req_connecting": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "avg": 0.016302663368245204,
+          "min": 0,
+          "med": 0,
+          "max": 17.2091,
+          "p(90)": 0,
+          "p(95)": 0
+        }
+      },
+      "http_reqs": {
+        "type": "counter",
+        "contains": "default",
+        "values": {
+          "count": 31126,
+          "rate": 51.85398922328235
+        }
+      },
+      "data_received": {
+        "type": "counter",
+        "contains": "data",
+        "values": {
+          "count": 326916298,
+          "rate": 544622.3155370867
+        }
+      },
+      "http_req_blocked": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "avg": 0.027809654308295347,
+          "min": 0,
+          "med": 0,
+          "max": 17.2091,
+          "p(90)": 0,
+          "p(95)": 0
+        }
+      },
+      "http_req_sending": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "min": 0,
+          "med": 0,
+          "max": 6.5007,
+          "p(90)": 0,
+          "p(95)": 0,
+          "avg": 0.022747265951294726
+        }
+      },
+      "b1_selective_option_filter_returned_count": {
+        "type": "trend",
+        "contains": "default",
+        "values": {
+          "avg": 50,
+          "min": 50,
+          "med": 50,
+          "max": 50,
+          "p(90)": 50,
+          "p(95)": 50
+        }
+      },
+      "http_req_waiting": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "p(95)": 369.9205,
+          "avg": 191.65820248988135,
+          "min": 6.825,
+          "med": 269.49170000000004,
+          "max": 604.9383,
+          "p(90)": 344.1097
+        }
+      },
+      "http_req_tls_handshaking": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "min": 0,
+          "med": 0,
+          "max": 0,
+          "p(90)": 0,
+          "p(95)": 0,
+          "avg": 0
+        }
+      }
+    }
+  }
+}

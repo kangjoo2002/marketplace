@@ -21,4 +21,12 @@ public class ProductSearchService {
 				request.getOffset()
 		);
 	}
+
+	public ProductSearchResponse searchDbTuned(ProductSearchRequest request) {
+		return ProductSearchResponse.of(
+				productSearchRepository.searchDbTuned(request),
+				request.getLimit(),
+				request.getOffset()
+		);
+	}
 }
