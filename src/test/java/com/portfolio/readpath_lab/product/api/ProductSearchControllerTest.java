@@ -45,6 +45,30 @@ class ProductSearchControllerTest {
 	}
 
 	@Test
+	void searchDbTunedReturnsStableBenchmarkResponseShape() throws Exception {
+		when(productSearchService.searchDbTuned(any()))
+				.thenReturn(ProductSearchResponse.of(List.of(), 50, 100));
+
+		mockMvc.perform(get("/api/v1/products/search/db-tuned")
+						.param("categoryId", "75")
+						.param("brandId", "943")
+						.param("status", "ACTIVE")
+						.param("minPrice", "10000")
+						.param("maxPrice", "100000")
+						.param("color", "BLACK")
+						.param("size", "M")
+						.param("stockStatus", "IN_STOCK")
+						.param("sort", "reviewCountDesc")
+						.param("limit", "50")
+						.param("offset", "100"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.items").isArray())
+				.andExpect(jsonPath("$.page.limit").value(50))
+				.andExpect(jsonPath("$.page.offset").value(100))
+				.andExpect(jsonPath("$.page.returnedCount").value(0));
+	}
+
+	@Test
 	void searchRejectsInvalidLimit() throws Exception {
 		mockMvc.perform(get("/api/v1/products/search")
 						.param("limit", "101"))
