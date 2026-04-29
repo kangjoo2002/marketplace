@@ -9,6 +9,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -66,6 +67,32 @@ class ProductSearchControllerTest {
 				.andExpect(jsonPath("$.page.limit").value(50))
 				.andExpect(jsonPath("$.page.offset").value(100))
 				.andExpect(jsonPath("$.page.returnedCount").value(0));
+	}
+
+	@Test
+	void searchDenormalizedDbReturnsStableBenchmarkResponseShape() throws Exception {
+		when(productSearchService.searchDenormalizedDb(any()))
+				.thenReturn(ProductSearchResponse.of(List.of(), 50, 100));
+
+		mockMvc.perform(get("/api/v1/products/search/denormalized-db")
+						.param("categoryId", "75")
+						.param("brandId", "943")
+						.param("status", "ACTIVE")
+						.param("minPrice", "10000")
+						.param("maxPrice", "100000")
+						.param("color", "BLACK")
+						.param("size", "M")
+						.param("stockStatus", "IN_STOCK")
+						.param("sort", "reviewCountDesc")
+						.param("limit", "50")
+						.param("offset", "100"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.items").isArray())
+				.andExpect(jsonPath("$.page.limit").value(50))
+				.andExpect(jsonPath("$.page.offset").value(100))
+				.andExpect(jsonPath("$.page.returnedCount").value(0));
+
+		verify(productSearchService).searchDenormalizedDb(any());
 	}
 
 	@Test

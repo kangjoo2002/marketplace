@@ -26,4 +26,9 @@ public class ProductSearchController {
 	public ProductSearchResponse searchDbTuned(@Valid @ModelAttribute ProductSearchRequest request) {
 		return productSearchService.searchDbTuned(request);
 	}
+
+	@GetMapping("/search/denormalized-db")
+	public ProductSearchResponse searchDenormalizedDb(@Valid @ModelAttribute ProductSearchRequest request) {
+		return productSearchService.searchDenormalizedDb(request);
+	}
 }

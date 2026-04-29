@@ -29,4 +29,12 @@ public class ProductSearchService {
 				request.getOffset()
 		);
 	}
+
+	public ProductSearchResponse searchDenormalizedDb(ProductSearchRequest request) {
+		return ProductSearchResponse.of(
+				productSearchRepository.searchDenormalizedDb(request),
+				request.getLimit(),
+				request.getOffset()
+		);
+	}
 }
