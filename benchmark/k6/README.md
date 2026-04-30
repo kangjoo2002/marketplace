@@ -1,4 +1,4 @@
-# Product Search k6 Baseline and DB Tuned API
+# Product Search k6 Baseline, DB Tuned, and Denormalized DB API
 
 This benchmark measures product search APIs as black-box HTTP endpoints. It does
 not measure PostgreSQL `EXPLAIN` execution time and does not collect internal
@@ -9,6 +9,15 @@ Target endpoints:
 ```http
 GET /api/v1/products/search
 GET /api/v1/products/search/db-tuned
+GET /api/v1/products/search/denormalized-db
+```
+
+Benchmark scripts:
+
+```text
+benchmark/k6/product-search-baseline.js
+benchmark/k6/product-search-db-tuned.js
+benchmark/k6/product-search-denormalized-db.js
 ```
 
 Baseline query shape under the API:
@@ -28,13 +37,23 @@ no SELECT DISTINCT where EXISTS makes DISTINCT unnecessary
 OFFSET pagination
 ```
 
+Denormalized DB query shape under the API:
+
+```text
+product_search_documents_moderate_skew
+option_signatures filter
+OFFSET pagination
+```
+
 The DB tuned API keeps PostgreSQL as the backing store and keeps the normalized
 products/product_options schema. It measures selected supporting indexes +
 `EXISTS` option filtering + DISTINCT removal + OFFSET pagination as a combined
 DB tuned path, not an `EXISTS`-only improvement.
 
-This benchmark does not use or assume keyset pagination, OpenSearch, Redis,
-caching, denormalized read tables, outbox, or `totalCount`.
+The Denormalized DB API keeps PostgreSQL as the backing store and reads from the
+`product_search_documents_moderate_skew` read table. This benchmark does not
+use or assume keyset pagination, OpenSearch, Redis, caching, outbox, or
+`totalCount`.
 
 ## Environment
 
@@ -275,6 +294,23 @@ $env:SUMMARY_JSON='benchmark\k6\results\products_moderate_skew\product_search_db
 Use a 1m warm-up before the measured DB tuned run and exclude the warm-up from
 official results.
 
+Denormalized DB API runs use the same scenario constants and can be run
+directly:
+
+```powershell
+$env:PROFILE='moderate_skew'
+$env:BASE_URL='http://localhost:8080'
+$env:VUS='10'
+$env:DURATION='10m'
+$env:SMOKE_ONLY='false'
+$env:SUMMARY_JSON='benchmark\k6\results\products_moderate_skew\product_search_denormalized_db_products_moderate_skew_YYYYMMDD_HHMMSS_summary.json'
+& 'C:\Program Files\k6\k6.exe' run --quiet benchmark\k6\product-search-denormalized-db.js
+```
+
+Use one B1 HTTP smoke, k6 smoke, and a 1m warm-up before the measured
+Denormalized DB API run. Exclude HTTP smoke, k6 smoke, and warm-up from
+official results.
+
 ## Results
 
 Measured results are saved under:
@@ -290,6 +326,8 @@ product_search_baseline_products_moderate_skew_YYYYMMDD_HHMMSS_summary.json
 product_search_baseline_products_moderate_skew_YYYYMMDD_HHMMSS_observations.md
 product_search_db_tuned_products_moderate_skew_YYYYMMDD_HHMMSS_summary.json
 product_search_db_tuned_products_moderate_skew_YYYYMMDD_HHMMSS_observations.md
+product_search_denormalized_db_products_moderate_skew_YYYYMMDD_HHMMSS_summary.json
+product_search_denormalized_db_products_moderate_skew_YYYYMMDD_HHMMSS_observations.md
 ```
 
 Do not commit huge raw logs or terminal dumps. Do not compare results across
@@ -394,21 +432,66 @@ Scenario-level p95:
 | `B2_broad_active_option_filter` | 33.930324999999996 ms |
 | `B3_deep_offset_option_filter` | 394.51556999999997 ms |
 
-## Baseline vs DB Tuned
+## Denormalized DB API Result
+
+The Denormalized DB API benchmark below reuses the same
+`product-search-baseline-v1` `moderate_skew` workload as the official Baseline
+API and DB tuned API artifacts:
+
+- Same B1/B2/B3 constants.
+- Same B1/B2/B3 weights: 40/40/20.
+- Same deterministic sequence: `[B1, B1, B2, B2, B3]`.
+- Same VUs: 10.
+- Same warm-up duration: 1m.
+- Same measured duration: 10m.
+- Same local k6 execution mode.
+
+The Denormalized DB API reads from the PostgreSQL
+`product_search_documents_moderate_skew` read table and filters options through
+`option_signatures`. It still uses OFFSET pagination. This result is not an
+OpenSearch result and is not a production capacity claim.
+
+Official Denormalized DB artifacts:
+
+```text
+benchmark/k6/results/products_moderate_skew/product_search_denormalized_db_products_moderate_skew_20260430_102433_summary.json
+benchmark/k6/results/products_moderate_skew/product_search_denormalized_db_products_moderate_skew_20260430_102433_observations.md
+```
+
+| Profile | Scenario set | Read path | VUs | Duration | Warm-up | Total requests | Mixed p95 | Throughput | Error rate | Failed checks |
+|---|---|---|---:|---|---|---:|---:|---:|---:|---:|
+| `moderate_skew` | `product-search-baseline-v1` | Denormalized DB API | 10 | 10m | 1m | 165685 | 127.34185999999998 ms | 276.1365354515421 req/s | 0 | 0 |
+
+Scenario-level p95:
+
+| Scenario | Denormalized DB p95 latency |
+|---|---:|
+| `B1_selective_option_filter` | 20.867624999999993 ms |
+| `B2_broad_active_option_filter` | 23.145569999999992 ms |
+| `B3_deep_offset_option_filter` | 152.9373 ms |
+
+API p95 must not be compared with PostgreSQL `EXPLAIN` Execution Time.
+OpenSearch comparison remains a later stage.
+
+## Baseline vs DB Tuned vs Denormalized DB
 
 Comparison uses only the official 10-minute Baseline API artifact:
 
 ```text
 benchmark/k6/results/products_moderate_skew/product_search_baseline_products_moderate_skew_20260428_115844_summary.json
+benchmark/k6/results/products_moderate_skew/product_search_db_tuned_products_moderate_skew_20260428_150401_summary.json
+benchmark/k6/results/products_moderate_skew/product_search_denormalized_db_products_moderate_skew_20260430_102433_summary.json
 ```
 
 | Read path | Total requests | Mixed p95 | B1 p95 | B2 p95 | B3 p95 | Throughput | Error rate | Failed checks |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | Baseline API | 382 | 29611.602365 ms | 17124.170814999994 ms | 33409.19112499999 ms | 18519.306105 ms | 0.6262291702382904 req/s | 0 | 0 |
 | DB tuned API | 31126 | 370.313125 ms | 386.7013 ms | 33.930324999999996 ms | 394.51556999999997 ms | 51.85398922328235 req/s | 0 | 0 |
+| Denormalized DB API | 165685 | 127.34185999999998 ms | 20.867624999999993 ms | 23.145569999999992 ms | 152.9373 ms | 276.1365354515421 req/s | 0 | 0 |
 
 `B2_broad_active_option_filter` is intentionally broad and may influence mixed
 p95. Use scenario-level p95 values when interpreting the mixed result.
 
 These are local synthetic benchmark results, not production capacity claims.
 API p95 must not be compared with PostgreSQL `EXPLAIN` Execution Time.
+OpenSearch comparison remains a later stage.
