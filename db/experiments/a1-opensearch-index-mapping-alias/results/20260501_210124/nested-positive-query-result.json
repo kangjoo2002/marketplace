@@ -1,0 +1,40 @@
+﻿{
+    "took":  5,
+    "timed_out":  false,
+    "_shards":  {
+                    "total":  1,
+                    "successful":  1,
+                    "skipped":  0,
+                    "failed":  0
+                },
+    "hits":  {
+                 "total":  {
+                               "value":  1,
+                               "relation":  "eq"
+                           },
+                 "max_score":  0.0,
+                 "hits":  [
+                              {
+                                  "_index":  "products_search_a17_smoke_nested_v1",
+                                  "_id":  "1",
+                                  "_score":  0.0,
+                                  "_source":  {
+                                                  "productId":  1,
+                                                  "options":  [
+                                                                  {
+                                                                      "color":  "BLACK",
+                                                                      "size":  "S",
+                                                                      "stockStatus":  "IN_STOCK"
+                                                                  },
+                                                                  {
+                                                                      "color":  "WHITE",
+                                                                      "size":  "M",
+                                                                      "stockStatus":  "IN_STOCK"
+                                                                  }
+                                                              ],
+                                                  "status":  "ACTIVE"
+                                              }
+                              }
+                          ]
+             }
+}

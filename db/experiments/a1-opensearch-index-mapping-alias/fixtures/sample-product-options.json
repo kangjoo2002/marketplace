@@ -1,0 +1,26 @@
+{
+  "productId": 1,
+  "sellerId": 5001,
+  "categoryId": 75,
+  "brandId": 943,
+  "status": "ACTIVE",
+  "price": 34900,
+  "rating": 4.35,
+  "reviewCount": 128,
+  "createdAt": "2026-04-30T10:15:00",
+  "updatedAt": "2026-04-30T10:20:00",
+  "sourceUpdatedAt": "2026-04-30T10:20:00",
+  "documentRefreshedAt": "2026-05-01T00:00:00",
+  "options": [
+    {
+      "color": "BLACK",
+      "size": "S",
+      "stockStatus": "IN_STOCK"
+    },
+    {
+      "color": "WHITE",
+      "size": "M",
+      "stockStatus": "IN_STOCK"
+    }
+  ]
+}

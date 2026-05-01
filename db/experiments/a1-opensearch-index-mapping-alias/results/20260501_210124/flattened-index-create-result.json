@@ -1,0 +1,5 @@
+﻿{
+    "acknowledged":  true,
+    "shards_acknowledged":  true,
+    "index":  "products_search_a17_smoke_flattened_v1"
+}

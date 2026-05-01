@@ -1,0 +1,45 @@
+{
+  "size": 10,
+  "_source": [
+    "productId",
+    "status",
+    "options"
+  ],
+  "query": {
+    "bool": {
+      "filter": [
+        {
+          "term": {
+            "status": "ACTIVE"
+          }
+        },
+        {
+          "nested": {
+            "path": "options",
+            "query": {
+              "bool": {
+                "filter": [
+                  {
+                    "term": {
+                      "options.color": "BLACK"
+                    }
+                  },
+                  {
+                    "term": {
+                      "options.size": "S"
+                    }
+                  },
+                  {
+                    "term": {
+                      "options.stockStatus": "IN_STOCK"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
