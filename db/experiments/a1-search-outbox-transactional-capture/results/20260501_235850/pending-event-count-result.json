@@ -1,0 +1,8 @@
+﻿{
+    "createEventCount":  1,
+    "updateEventCount":  1,
+    "pendingEventCount":  3,
+    "capturedEventCount":  3,
+    "rollbackOutboxCount":  0,
+    "statusChangeEventCount":  1
+}

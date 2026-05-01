@@ -1,0 +1,37 @@
+﻿{
+    "counts":  {
+                   "createEventCount":  1,
+                   "updateEventCount":  1,
+                   "pendingEventCount":  3,
+                   "capturedEventCount":  3,
+                   "rollbackOutboxCount":  0,
+                   "statusChangeEventCount":  1
+               },
+    "dbTarget":  "docker compose postgres/readpath_lab",
+    "schemaStatus":  "applied",
+    "commitScenario":  {
+                           "productId":  -17001001,
+                           "productCount":  1,
+                           "createEventCount":  1,
+                           "createEventStatus":  "PENDING"
+                       },
+    "updateScenario":  {
+                           "price":  35900,
+                           "productId":  -17001001,
+                           "updateEventCount":  1,
+                           "updateEventStatus":  "PENDING"
+                       },
+    "finalSmokeStatus":  "pass",
+    "rollbackScenario":  {
+                             "productId":  -17001002,
+                             "outboxCount":  0,
+                             "productCount":  0
+                         },
+    "statusChangeScenario":  {
+                                 "status":  "DELETED",
+                                 "productId":  -17001001,
+                                 "statusChangeEventCount":  1,
+                                 "statusChangeEventStatus":  "PENDING"
+                             },
+    "transactionAtomicity":  "pass"
+}
