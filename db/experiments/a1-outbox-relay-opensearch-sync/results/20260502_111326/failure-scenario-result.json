@@ -1,0 +1,15 @@
+﻿{
+    "claimedCount":  1,
+    "processed":  [
+
+                  ],
+    "failed":  [
+                   {
+                       "eventId":  53,
+                       "productId":  -18002003,
+                       "eventType":  "PRODUCT_CREATED",
+                       "status":  "FAILED",
+                       "error":  "Unable to connect to the remote server"
+                   }
+               ]
+}

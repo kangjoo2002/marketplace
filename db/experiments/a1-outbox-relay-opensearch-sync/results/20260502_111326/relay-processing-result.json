@@ -1,0 +1,63 @@
+﻿{
+    "initial":  {
+                    "claimedCount":  3,
+                    "processed":  [
+                                      {
+                                          "eventId":  50,
+                                          "productId":  -18002001,
+                                          "eventType":  "PRODUCT_CREATED",
+                                          "operation":  "upsert",
+                                          "status":  "DONE"
+                                      },
+                                      {
+                                          "eventId":  51,
+                                          "productId":  -18002001,
+                                          "eventType":  "PRODUCT_UPDATED",
+                                          "operation":  "upsert",
+                                          "status":  "DONE"
+                                      },
+                                      {
+                                          "eventId":  52,
+                                          "productId":  -18002002,
+                                          "eventType":  "PRODUCT_CREATED",
+                                          "operation":  "upsert",
+                                          "status":  "DONE"
+                                      }
+                                  ],
+                    "failed":  [
+
+                               ]
+                },
+    "statusChange":  {
+                         "claimedCount":  1,
+                         "processed":  [
+                                           {
+                                               "eventId":  54,
+                                               "productId":  -18002002,
+                                               "eventType":  "PRODUCT_STATUS_CHANGED",
+                                               "operation":  "delete",
+                                               "status":  "DONE"
+                                           }
+                                       ],
+                         "failed":  [
+
+                                    ]
+                     },
+    "replay":  {
+                   "claimedCount":  1,
+                   "processed":  [
+                                     {
+                                         "eventId":  55,
+                                         "productId":  -18002001,
+                                         "eventType":  "PRODUCT_UPDATED",
+                                         "operation":  "upsert",
+                                         "status":  "DONE"
+                                     }
+                                 ],
+                   "failed":  [
+
+                              ]
+               },
+    "processedEventCount":  5,
+    "relayBatchDurationMs":  13508
+}
