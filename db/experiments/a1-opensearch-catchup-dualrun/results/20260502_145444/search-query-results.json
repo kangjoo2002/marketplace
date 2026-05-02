@@ -1,0 +1,200 @@
+﻿[
+    {
+        "scenario":  "C1_selective_option_filter",
+        "productIds":  [
+                           -20002004,
+                           -20002000
+                       ],
+        "query":  {
+                      "query":  {
+                                    "bool":  {
+                                                 "filter":  [
+                                                                {
+                                                                    "range":  {
+                                                                                  "productId":  {
+                                                                                                    "gte":  -20002999,
+                                                                                                    "lte":  -20002000
+                                                                                                }
+                                                                              }
+                                                                },
+                                                                {
+                                                                    "term":  {
+                                                                                 "status":  "ACTIVE"
+                                                                             }
+                                                                },
+                                                                {
+                                                                    "term":  {
+                                                                                 "categoryId":  75
+                                                                             }
+                                                                },
+                                                                {
+                                                                    "term":  {
+                                                                                 "brandId":  943
+                                                                             }
+                                                                },
+                                                                {
+                                                                    "nested":  {
+                                                                                   "query":  {
+                                                                                                 "bool":  {
+                                                                                                              "filter":  [
+                                                                                                                             {
+                                                                                                                                 "term":  {
+                                                                                                                                              "options.color":  "BLACK"
+                                                                                                                                          }
+                                                                                                                             },
+                                                                                                                             {
+                                                                                                                                 "term":  {
+                                                                                                                                              "options.size":  "S"
+                                                                                                                                          }
+                                                                                                                             },
+                                                                                                                             {
+                                                                                                                                 "term":  {
+                                                                                                                                              "options.stockStatus":  "IN_STOCK"
+                                                                                                                                          }
+                                                                                                                             }
+                                                                                                                         ]
+                                                                                                          }
+                                                                                             },
+                                                                                   "path":  "options"
+                                                                               }
+                                                                }
+                                                            ]
+                                             }
+                                },
+                      "sort":  [
+                                   {
+                                       "reviewCount":  {
+                                                           "order":  "desc"
+                                                       }
+                                   },
+                                   {
+                                       "productId":  {
+                                                         "order":  "desc"
+                                                     }
+                                   }
+                               ],
+                      "size":  50,
+                      "_source":  [
+                                      "productId",
+                                      "sourceUpdatedAt"
+                                  ]
+                  }
+    },
+    {
+        "scenario":  "C2_active_status_filter",
+        "productIds":  [
+                           -20002004,
+                           -20002000,
+                           -20002001,
+                           -20002002
+                       ],
+        "query":  {
+                      "query":  {
+                                    "bool":  {
+                                                 "filter":  [
+                                                                {
+                                                                    "range":  {
+                                                                                  "productId":  {
+                                                                                                    "gte":  -20002999,
+                                                                                                    "lte":  -20002000
+                                                                                                }
+                                                                              }
+                                                                },
+                                                                {
+                                                                    "term":  {
+                                                                                 "status":  "ACTIVE"
+                                                                             }
+                                                                }
+                                                            ]
+                                             }
+                                },
+                      "sort":  [
+                                   {
+                                       "reviewCount":  {
+                                                           "order":  "desc"
+                                                       }
+                                   },
+                                   {
+                                       "productId":  {
+                                                         "order":  "desc"
+                                                     }
+                                   }
+                               ],
+                      "size":  50,
+                      "_source":  [
+                                      "productId",
+                                      "sourceUpdatedAt"
+                                  ]
+                  }
+    },
+    {
+        "scenario":  "C3_deleted_exclusion",
+        "productIds":  [
+
+                       ],
+        "query":  {
+                      "query":  {
+                                    "bool":  {
+                                                 "filter":  [
+                                                                {
+                                                                    "range":  {
+                                                                                  "productId":  {
+                                                                                                    "gte":  -20002999,
+                                                                                                    "lte":  -20002000
+                                                                                                }
+                                                                              }
+                                                                },
+                                                                {
+                                                                    "term":  {
+                                                                                 "status":  "ACTIVE"
+                                                                             }
+                                                                },
+                                                                {
+                                                                    "nested":  {
+                                                                                   "query":  {
+                                                                                                 "bool":  {
+                                                                                                              "filter":  [
+                                                                                                                             {
+                                                                                                                                 "term":  {
+                                                                                                                                              "options.color":  "GRAY"
+                                                                                                                                          }
+                                                                                                                             },
+                                                                                                                             {
+                                                                                                                                 "term":  {
+                                                                                                                                              "options.size":  "M"
+                                                                                                                                          }
+                                                                                                                             },
+                                                                                                                             {
+                                                                                                                                 "term":  {
+                                                                                                                                              "options.stockStatus":  "LOW_STOCK"
+                                                                                                                                          }
+                                                                                                                             }
+                                                                                                                         ]
+                                                                                                          }
+                                                                                             },
+                                                                                   "path":  "options"
+                                                                               }
+                                                                }
+                                                            ]
+                                             }
+                                },
+                      "sort":  [
+                                   {
+                                       "reviewCount":  {
+                                                           "order":  "desc"
+                                                       }
+                                   },
+                                   {
+                                       "productId":  {
+                                                         "order":  "desc"
+                                                     }
+                                   }
+                               ],
+                      "size":  50,
+                      "_source":  [
+                                      "productId",
+                                      "sourceUpdatedAt"
+                                  ]
+                  }
+    }
+]

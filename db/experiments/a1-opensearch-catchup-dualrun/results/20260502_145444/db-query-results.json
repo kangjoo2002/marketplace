@@ -1,0 +1,24 @@
+﻿[
+    {
+        "scenario":  "C1_selective_option_filter",
+        "productIds":  [
+                           -20002004,
+                           -20002000
+                       ]
+    },
+    {
+        "scenario":  "C2_active_status_filter",
+        "productIds":  [
+                           -20002004,
+                           -20002000,
+                           -20002001,
+                           -20002002
+                       ]
+    },
+    {
+        "scenario":  "C3_deleted_exclusion",
+        "productIds":  [
+
+                       ]
+    }
+]

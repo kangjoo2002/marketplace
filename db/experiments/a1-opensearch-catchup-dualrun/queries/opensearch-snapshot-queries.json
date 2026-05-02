@@ -1,0 +1,26 @@
+{
+  "topK": 50,
+  "scenarios": [
+    {
+      "name": "C1_selective_option_filter",
+      "description": "ACTIVE category/brand filter plus nested BLACK/S/IN_STOCK option filter.",
+      "sort": [
+        { "reviewCount": { "order": "desc" } },
+        { "productId": { "order": "desc" } }
+      ]
+    },
+    {
+      "name": "C2_active_status_filter",
+      "description": "Broad ACTIVE product filter with deterministic review count and product ID ordering.",
+      "sort": [
+        { "reviewCount": { "order": "desc" } },
+        { "productId": { "order": "desc" } }
+      ]
+    },
+    {
+      "name": "C3_deleted_exclusion",
+      "description": "Option filter that only matches the status-changed DELETED product in source rows; ACTIVE filter should return no IDs."
+    }
+  ],
+  "note": "The executable smoke script builds equivalent OpenSearch query bodies at runtime so aliases and top-k stay configurable."
+}
