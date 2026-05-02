@@ -1,0 +1,85 @@
+﻿{
+    "mismatchThresholdRatio":  0,
+    "mismatchCount":  0,
+    "mismatchRatio":  0,
+    "topKMismatchCount":  0,
+    "missingInSearchCount":  0,
+    "extraInSearchCount":  0,
+    "orderingMismatchCount":  0,
+    "comparisons":  [
+                        {
+                            "scenario":  "C1_selective_option_filter",
+                            "dbIds":  [
+                                          -20002004,
+                                          -20002000
+                                      ],
+                            "searchIds":  [
+                                              -20002004,
+                                              -20002000
+                                          ],
+                            "missingInSearchCount":  0,
+                            "missingInSearchProductIds":  [
+
+                                                          ],
+                            "extraInSearchCount":  0,
+                            "extraInSearchProductIds":  [
+
+                                                        ],
+                            "orderingMismatchCount":  0,
+                            "orderingMismatchPositions":  [
+
+                                                          ],
+                            "mismatchCount":  0
+                        },
+                        {
+                            "scenario":  "C2_active_status_filter",
+                            "dbIds":  [
+                                          -20002004,
+                                          -20002000,
+                                          -20002001,
+                                          -20002002
+                                      ],
+                            "searchIds":  [
+                                              -20002004,
+                                              -20002000,
+                                              -20002001,
+                                              -20002002
+                                          ],
+                            "missingInSearchCount":  0,
+                            "missingInSearchProductIds":  [
+
+                                                          ],
+                            "extraInSearchCount":  0,
+                            "extraInSearchProductIds":  [
+
+                                                        ],
+                            "orderingMismatchCount":  0,
+                            "orderingMismatchPositions":  [
+
+                                                          ],
+                            "mismatchCount":  0
+                        },
+                        {
+                            "scenario":  "C3_deleted_exclusion",
+                            "dbIds":  [
+
+                                      ],
+                            "searchIds":  [
+
+                                          ],
+                            "missingInSearchCount":  0,
+                            "missingInSearchProductIds":  [
+
+                                                          ],
+                            "extraInSearchCount":  0,
+                            "extraInSearchProductIds":  [
+
+                                                        ],
+                            "orderingMismatchCount":  0,
+                            "orderingMismatchPositions":  [
+
+                                                          ],
+                            "mismatchCount":  0
+                        }
+                    ]
+}

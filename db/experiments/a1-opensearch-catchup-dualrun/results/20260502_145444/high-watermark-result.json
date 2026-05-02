@@ -1,0 +1,5 @@
+﻿{
+    "backfillStartOutboxId":  59,
+    "catchUpReplayPredicate":  "search_outbox.id \u003e 59",
+    "highWatermarkSource":  "fresh controlled smoke baseline before catch-up events"
+}

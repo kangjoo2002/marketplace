@@ -1,0 +1,35 @@
+﻿{
+    "backfillStartOutboxId":  59,
+    "catchUpReplayPredicate":  "search_outbox.id \u003e 59",
+    "replayedEventCount":  3,
+    "replayDurationMs":  8060,
+    "pendingAfterReplay":  0,
+    "failedAfterReplay":  0,
+    "replayBatchCount":  1,
+    "processed":  [
+                      {
+                          "eventId":  60,
+                          "productId":  -20002002,
+                          "eventType":  "PRODUCT_UPDATED",
+                          "operation":  "upsert",
+                          "status":  "DONE"
+                      },
+                      {
+                          "eventId":  61,
+                          "productId":  -20002000,
+                          "eventType":  "PRODUCT_CREATED",
+                          "operation":  "upsert",
+                          "status":  "DONE"
+                      },
+                      {
+                          "eventId":  62,
+                          "productId":  -20002003,
+                          "eventType":  "PRODUCT_STATUS_CHANGED",
+                          "operation":  "delete",
+                          "status":  "DONE"
+                      }
+                  ],
+    "failed":  [
+
+               ]
+}
