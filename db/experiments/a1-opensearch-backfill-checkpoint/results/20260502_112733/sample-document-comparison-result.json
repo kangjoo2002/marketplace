@@ -1,0 +1,27 @@
+﻿{
+    "sampleDocumentComparisonCount":  3,
+    "sampleDocumentMismatchCount":  0,
+    "samples":  [
+                    {
+                        "productId":  -19002004,
+                        "mismatchCount":  0,
+                        "mismatches":  [
+
+                                       ]
+                    },
+                    {
+                        "productId":  -19002002,
+                        "mismatchCount":  0,
+                        "mismatches":  [
+
+                                       ]
+                    },
+                    {
+                        "productId":  -19002001,
+                        "mismatchCount":  0,
+                        "mismatches":  [
+
+                                       ]
+                    }
+                ]
+}
