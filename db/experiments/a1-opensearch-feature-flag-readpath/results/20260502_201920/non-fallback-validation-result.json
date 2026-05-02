@@ -1,0 +1,15 @@
+﻿{
+    "scenario":  "non-fallback-validation-error",
+    "readPath":  "opensearch",
+    "openSearchUrl":  "http://127.0.0.1:1",
+    "statusCode":  400,
+    "expectedStatusCode":  400,
+    "itemCount":  0,
+    "responseShapeMatches":  false,
+    "fallbackLogCount":  0,
+    "fallbackSuccessLogCount":  0,
+    "timeoutLogCount":  0,
+    "durationMs":  18016,
+    "result":  "pass",
+    "responseBody":  "{\"message\":\"Invalid request\",\"errors\":[\"sort: \\\"reviewCountDesc|priceAsc|priceDesc|createdAtDesc\\\"와 일치해야 합니다\"]}"
+}

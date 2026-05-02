@@ -1,0 +1,4 @@
+﻿{
+    "openSearch5xxScenario":  "manual/future validation; no deterministic fake OpenSearch 5xx server is started by this smoke",
+    "malformedSearchResponseScenario":  "manual/future validation; no deterministic malformed Search server is started by this smoke"
+}
