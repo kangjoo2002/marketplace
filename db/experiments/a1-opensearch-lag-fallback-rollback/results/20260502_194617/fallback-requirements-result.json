@@ -1,0 +1,28 @@
+﻿{
+    "fallbackRequirementDefined":  true,
+    "openSearchTimeoutScenarioDefined":  true,
+    "openSearch5xxScenarioDefined":  true,
+    "connectionRefusedScenarioDefined":  true,
+    "connectionResetScenarioDefined":  true,
+    "hostUnreachableScenarioDefined":  true,
+    "dnsFailureScenarioDefined":  true,
+    "circuitBreakerScenarioDefined":  true,
+    "invalidSearchResponseScenarioDefined":  true,
+    "nonFallbackClientErrorConditionsDefined":  true,
+    "implementedApplicationFallback":  false,
+    "fallbackTriggers":  [
+                             "OpenSearch request timeout",
+                             "OpenSearch HTTP 5xx",
+                             "connection refused",
+                             "connection reset",
+                             "host unreachable",
+                             "DNS failure",
+                             "circuit breaker open",
+                             "malformed or invalid Search response"
+                         ],
+    "nonFallbackConditions":  [
+                                  "request validation error",
+                                  "unsupported query parameter",
+                                  "client-side 4xx caused by invalid input"
+                              ]
+}
