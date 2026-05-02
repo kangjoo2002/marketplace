@@ -1,0 +1,9 @@
+﻿{
+    "backfillRunId":  "20260502_112733",
+    "lastProcessedProductId":  -19002001,
+    "batchSize":  2,
+    "status":  "COMPLETED",
+    "startedAt":  "2026-05-02T11:27:33.1600222+09:00",
+    "updatedAt":  "2026-05-02T11:27:53.3545190+09:00",
+    "completedAt":  "2026-05-02T11:27:53.3535188+09:00"
+}

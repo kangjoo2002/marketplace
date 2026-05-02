@@ -1,0 +1,6 @@
+﻿{
+    "sourceFilter":  "products.id BETWEEN -19002999 AND -19002000",
+    "sourceProductCount":  4,
+    "indexedDocumentCount":  4,
+    "countsMatch":  true
+}

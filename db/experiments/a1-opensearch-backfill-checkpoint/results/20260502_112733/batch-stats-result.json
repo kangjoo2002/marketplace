@@ -1,0 +1,11 @@
+﻿{
+    "batchSize":  2,
+    "processedProductCount":  4,
+    "partialBatchCount":  1,
+    "resumedBatchCount":  1,
+    "totalBatchCount":  2,
+    "failedBatchCount":  0,
+    "retriedBatchCount":  0,
+    "backfillDurationMs":  8027,
+    "backfillThroughputProductsPerSecond":  0.498
+}
