@@ -1,0 +1,15 @@
+﻿{
+    "scenario":  "opensearch-unavailable-fallback",
+    "readPath":  "opensearch",
+    "openSearchUrl":  "http://127.0.0.1:1",
+    "statusCode":  200,
+    "expectedStatusCode":  200,
+    "itemCount":  2,
+    "responseShapeMatches":  true,
+    "fallbackLogCount":  1,
+    "fallbackSuccessLogCount":  1,
+    "timeoutLogCount":  0,
+    "durationMs":  18050,
+    "result":  "pass",
+    "responseBody":  "{\"items\":[{\"id\":-21002005,\"sellerId\":21005,\"categoryId\":75,\"brandId\":943,\"status\":\"ACTIVE\",\"price\":25900,\"rating\":4.55,\"reviewCount\":350,\"createdAt\":\"2026-05-02T15:00:05\",\"updatedAt\":\"2026-05-02T15:00:05\"},{\"id\":-21002004,\"sellerId\":21004,\"categoryId\":75,\"brandId\":943,\"status\":\"ACTIVE\",\"price\":24900,\"rating\":4.54,\"reviewCount\":340,\"createdAt\":\"2026-05-02T15:00:04\",\"updatedAt\":\"2026-05-02T15:00:04\"}],\"page\":{\"limit\":2,\"offset\":0,\"returnedCount\":2}}"
+}

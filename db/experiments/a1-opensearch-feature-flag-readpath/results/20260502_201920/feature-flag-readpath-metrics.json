@@ -1,0 +1,17 @@
+﻿{
+    "flagName":  "readpath.product-search.read-path",
+    "flagSource":  "Spring application property or environment override",
+    "defaultFlagValue":  "db",
+    "dbPathSmokeResult":  "pass",
+    "searchPathSmokeResult":  "pass",
+    "fallbackScenarioResult":  "pass",
+    "fallbackCount":  1,
+    "fallbackSuccessCount":  1,
+    "timeoutCount":  0,
+    "openSearchFailureScenarioCount":  1,
+    "nonFallbackValidationErrorResult":  "pass",
+    "flagRollbackPass":  true,
+    "flagRollbackTimeMs":  18435,
+    "circuitBreakerImplemented":  false,
+    "circuitBreakerFollowUpDocumented":  true
+}
