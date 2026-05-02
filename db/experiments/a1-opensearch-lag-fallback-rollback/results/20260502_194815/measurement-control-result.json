@@ -1,0 +1,41 @@
+﻿{
+    "postgresReadyBeforeEventCreation":  true,
+    "openSearchHealthyBeforeEventCreation":  true,
+    "eventCreationStartedAfterReadiness":  true,
+    "dockerStartupTimeIncludedInEventLag":  false,
+    "openSearchHealthWaitIncludedInEventLag":  false,
+    "normalLagSeparatedFromBacklogRecovery":  true,
+    "controlledBacklogExcludedFromNormalLagMetrics":  true,
+    "measurementStartedAt":  "2026-05-02T19:48:20.5508183+09:00",
+    "measurementFinishedAt":  "2026-05-02T19:48:29.4915074+09:00",
+    "postgresReadiness":  {
+                              "ready":  true,
+                              "waitSeconds":  120,
+                              "output":  "/var/run/postgresql:5432 - accepting connections"
+                          },
+    "openSearchReadiness":  {
+                                "ready":  true,
+                                "waitSeconds":  120,
+                                "health":  {
+                                               "cluster_name":  "docker-cluster",
+                                               "status":  "green",
+                                               "timed_out":  false,
+                                               "number_of_nodes":  1,
+                                               "number_of_data_nodes":  1,
+                                               "discovered_master":  true,
+                                               "discovered_cluster_manager":  true,
+                                               "active_primary_shards":  5,
+                                               "active_shards":  5,
+                                               "relocating_shards":  0,
+                                               "initializing_shards":  0,
+                                               "unassigned_shards":  0,
+                                               "delayed_unassigned_shards":  0,
+                                               "number_of_pending_tasks":  0,
+                                               "number_of_in_flight_fetch":  0,
+                                               "task_max_waiting_in_queue_millis":  0,
+                                               "active_shards_percent_as_number":  100.0
+                                           }
+                            },
+    "environmentCaveat":  "local Docker Compose PostgreSQL and experiment-local OpenSearch smoke service only",
+    "thresholdCaveat":  "local smoke validation gates only; not production SLA/SLO"
+}

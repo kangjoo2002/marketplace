@@ -1,0 +1,12 @@
+﻿{
+    "v1Index":  "products_search_ops_smoke_v1",
+    "v2Index":  "products_search_ops_smoke_v2",
+    "readAlias":  "products_search_ops_smoke_read",
+    "currentAlias":  "products_search_ops_smoke_current",
+    "writeAlias":  "products_search_ops_smoke_write",
+    "writeAliasBehavior":  "write alias remains on v1 during this operations smoke; read/current aliases are switched and rolled back in isolation",
+    "initialReadAliasSeesV1Marker":  true,
+    "readAliasSeesV2MarkerAfterSwitch":  true,
+    "readAliasStillSeesV1MarkerAfterSwitch":  false,
+    "aliasSwitchSuccess":  true
+}

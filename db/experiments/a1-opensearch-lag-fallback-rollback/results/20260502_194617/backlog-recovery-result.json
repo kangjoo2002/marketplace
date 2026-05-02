@@ -1,0 +1,14 @@
+﻿{
+    "pendingEventCountBeforeRecovery":  3,
+    "pendingEventCountAfterRecovery":  0,
+    "pendingEventCountThresholdAfterRecovery":  0,
+    "oldestPendingAgeSecondsBeforeRecovery":  2.531391,
+    "oldestPendingAgeSecondsAfterRecovery":  0,
+    "oldestPendingAgeThresholdSecondsAfterRecovery":  0,
+    "failedEventCountAfterRecovery":  0,
+    "failedEventCountThresholdAfterRecovery":  0,
+    "processedBacklogEventCount":  3,
+    "recoveryThresholdResult":  "pass",
+    "backlogDelaySeconds":  2,
+    "note":  "controlled backlog data is excluded from normal p95/max event lag"
+}

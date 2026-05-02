@@ -1,0 +1,22 @@
+﻿{
+    "p95EventLagSeconds":  7.6081268,
+    "p95EventLagThresholdSeconds":  30,
+    "maxEventLagSeconds":  7.929331,
+    "maxEventLagThresholdSeconds":  60,
+    "processedEventCount":  5,
+    "failedEventCount":  0,
+    "retryCount":  0,
+    "lagThresholdResult":  "pass",
+    "rawValidation":  {
+                          "normalRetryCount":  0,
+                          "normalFailedEventCount":  0,
+                          "allNamespacedEventCount":  8,
+                          "normalMaxEventLagSeconds":  7.929331,
+                          "normalP95EventLagSeconds":  7.6081268,
+                          "normalProcessedEventCount":  5,
+                          "backlogProcessedEventCount":  3,
+                          "backlogFailedEventCountAfterRecovery":  0,
+                          "backlogPendingEventCountAfterRecovery":  0,
+                          "backlogOldestPendingAgeSecondsAfterRecovery":  0
+                      }
+}

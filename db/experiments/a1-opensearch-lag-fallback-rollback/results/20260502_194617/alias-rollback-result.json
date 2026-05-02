@@ -1,0 +1,11 @@
+﻿{
+    "rollbackSuccess":  true,
+    "rollbackDurationMs":  80,
+    "readAliasSeesV1MarkerAfterRollback":  true,
+    "readAliasStillSeesV2MarkerAfterRollback":  false,
+    "previousIndexRetained":  true,
+    "retainedIndexes":  [
+                            "products_search_ops_smoke_v1",
+                            "products_search_ops_smoke_v2"
+                        ]
+}
