@@ -43,6 +43,7 @@ public class ProductSearchReadPathProperties {
 		private String baseUrl = "http://localhost:9200";
 		private String indexAlias = "products_search_read";
 		private int timeoutMs = 500;
+		private CircuitBreaker circuitBreaker = new CircuitBreaker();
 
 		public String getBaseUrl() {
 			return baseUrl;
@@ -66,6 +67,54 @@ public class ProductSearchReadPathProperties {
 
 		public void setTimeoutMs(int timeoutMs) {
 			this.timeoutMs = timeoutMs;
+		}
+
+		public CircuitBreaker getCircuitBreaker() {
+			return circuitBreaker;
+		}
+
+		public void setCircuitBreaker(CircuitBreaker circuitBreaker) {
+			this.circuitBreaker = circuitBreaker;
+		}
+	}
+
+	public static class CircuitBreaker {
+
+		private boolean enabled = true;
+		private int failureThreshold = 3;
+		private long openWaitMs = 1000;
+		private int halfOpenPermittedCalls = 1;
+
+		public boolean isEnabled() {
+			return enabled;
+		}
+
+		public void setEnabled(boolean enabled) {
+			this.enabled = enabled;
+		}
+
+		public int getFailureThreshold() {
+			return failureThreshold;
+		}
+
+		public void setFailureThreshold(int failureThreshold) {
+			this.failureThreshold = failureThreshold;
+		}
+
+		public long getOpenWaitMs() {
+			return openWaitMs;
+		}
+
+		public void setOpenWaitMs(long openWaitMs) {
+			this.openWaitMs = openWaitMs;
+		}
+
+		public int getHalfOpenPermittedCalls() {
+			return halfOpenPermittedCalls;
+		}
+
+		public void setHalfOpenPermittedCalls(int halfOpenPermittedCalls) {
+			this.halfOpenPermittedCalls = halfOpenPermittedCalls;
 		}
 	}
 }

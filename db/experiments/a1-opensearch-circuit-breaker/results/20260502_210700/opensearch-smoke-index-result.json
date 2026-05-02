@@ -1,0 +1,5 @@
+﻿{
+    "indexName":  "products_search_circuit_breaker_smoke_v1",
+    "readAlias":  "products_search_circuit_breaker_smoke_read",
+    "indexedDocumentCount":  3
+}

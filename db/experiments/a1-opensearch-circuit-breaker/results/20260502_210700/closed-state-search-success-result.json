@@ -1,0 +1,22 @@
+﻿{
+    "scenario":  "closed-state-search-success",
+    "readPath":  "opensearch",
+    "statusCodes":  [
+                        200
+                    ],
+    "expectedStatusCode":  200,
+    "itemCount":  2,
+    "responseShapeMatches":  true,
+    "fallbackLogCount":  0,
+    "fallbackSuccessLogCount":  0,
+    "timeoutLogCount":  0,
+    "openSearchFailureCount":  0,
+    "circuitOpenFallbackLogCount":  0,
+    "circuitBreakerOpenCount":  0,
+    "shortCircuitedRequestCount":  0,
+    "halfOpenAttemptCount":  0,
+    "halfOpenSuccessCount":  0,
+    "halfOpenFailureCount":  0,
+    "result":  "pass",
+    "responseBody":  "{\"items\":[{\"id\":-23002003,\"sellerId\":23003,\"categoryId\":23075,\"brandId\":23943,\"status\":\"ACTIVE\",\"price\":23900,\"rating\":4.53,\"reviewCount\":330,\"createdAt\":\"2026-05-02T17:00:03\",\"updatedAt\":\"2026-05-02T17:00:03\"},{\"id\":-23002002,\"sellerId\":23002,\"categoryId\":23075,\"brandId\":23943,\"status\":\"ACTIVE\",\"price\":22900,\"rating\":4.52,\"reviewCount\":320,\"createdAt\":\"2026-05-02T17:00:02\",\"updatedAt\":\"2026-05-02T17:00:02\"}],\"page\":{\"limit\":2,\"offset\":0,\"returnedCount\":2}}"
+}
