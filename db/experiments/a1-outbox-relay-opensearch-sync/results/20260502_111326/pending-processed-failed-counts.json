@@ -1,0 +1,8 @@
+﻿{
+    "processedEventCount":  5,
+    "pendingEventCount":  0,
+    "failedEventCount":  1,
+    "retryCount":  1,
+    "oldestPendingAgeSeconds":  864002.054,
+    "relayBatchDurationMs":  13508
+}

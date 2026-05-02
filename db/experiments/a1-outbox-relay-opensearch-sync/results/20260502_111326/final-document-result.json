@@ -1,0 +1,33 @@
+﻿{
+    "productId":  -18002001,
+    "documentCount":  1,
+    "duplicateReplayCount":  0,
+    "idempotentReplayMismatchCount":  0,
+    "finalDocumentComparison":  "pass",
+    "finalDocument":  {
+                          "price":  45900,
+                          "rating":  4.42,
+                          "status":  "ACTIVE",
+                          "brandId":  943,
+                          "options":  [
+                                          {
+                                              "size":  "M",
+                                              "color":  "WHITE",
+                                              "stockStatus":  "IN_STOCK"
+                                          },
+                                          {
+                                              "size":  "S",
+                                              "color":  "BLACK",
+                                              "stockStatus":  "IN_STOCK"
+                                          }
+                                      ],
+                          "sellerId":  18001,
+                          "createdAt":  "2026-05-02T09:00:00",
+                          "productId":  -18002001,
+                          "updatedAt":  "2026-05-02T09:10:00",
+                          "categoryId":  75,
+                          "reviewCount":  151,
+                          "sourceUpdatedAt":  "2026-05-02T09:10:00",
+                          "documentRefreshedAt":  "2026-05-02T02:13:45"
+                      }
+}

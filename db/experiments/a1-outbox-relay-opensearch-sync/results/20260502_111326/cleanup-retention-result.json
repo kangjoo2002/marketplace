@@ -1,0 +1,7 @@
+﻿{
+    "doneRetentionDays":  7,
+    "retainedFailedCount":  1,
+    "retainedPendingCount":  1,
+    "cleanedDoneEventCount":  1,
+    "retainedRecentDoneCount":  1
+}
