@@ -1,0 +1,5 @@
+﻿{
+    "index":  "products_search_benchmark_moderate_skew_v1",
+    "optionsType":  "nested",
+    "passes":  true
+}

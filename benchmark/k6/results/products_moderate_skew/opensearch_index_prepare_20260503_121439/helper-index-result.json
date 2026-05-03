@@ -1,0 +1,8 @@
+﻿{
+    "indexName":  "idx_product_options_moderate_skew_product_id_benchmark_export",
+    "tableName":  "product_options_moderate_skew",
+    "required":  true,
+    "present":  true,
+    "created":  false,
+    "message":  "A product_id-leading index is present."
+}

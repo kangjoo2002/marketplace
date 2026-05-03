@@ -1,0 +1,32 @@
+﻿[
+    {
+        "tablename":  "product_options_moderate_skew",
+        "indexname":  "idx_product_options_moderate_skew_color_size_stock_product",
+        "indexdef":  "CREATE INDEX idx_product_options_moderate_skew_color_size_stock_product ON public.product_options_moderate_skew USING btree (color, size, stock_status, product_id)"
+    },
+    {
+        "tablename":  "product_options_moderate_skew",
+        "indexname":  "idx_product_options_moderate_skew_product_id_benchmark_export",
+        "indexdef":  "CREATE INDEX idx_product_options_moderate_skew_product_id_benchmark_export ON public.product_options_moderate_skew USING btree (product_id)"
+    },
+    {
+        "tablename":  "product_options_moderate_skew",
+        "indexname":  "product_options_moderate_skew_pkey",
+        "indexdef":  "CREATE UNIQUE INDEX product_options_moderate_skew_pkey ON public.product_options_moderate_skew USING btree (id)"
+    },
+    {
+        "tablename":  "products_moderate_skew",
+        "indexname":  "idx_products_moderate_skew_active_cat_brand_review",
+        "indexdef":  "CREATE INDEX idx_products_moderate_skew_active_cat_brand_review ON public.products_moderate_skew USING btree (category_id, brand_id, review_count DESC, id DESC) WHERE ((status)::text = \u0027ACTIVE\u0027::text)"
+    },
+    {
+        "tablename":  "products_moderate_skew",
+        "indexname":  "idx_products_moderate_skew_active_created",
+        "indexdef":  "CREATE INDEX idx_products_moderate_skew_active_created ON public.products_moderate_skew USING btree (created_at DESC, id DESC) WHERE ((status)::text = \u0027ACTIVE\u0027::text)"
+    },
+    {
+        "tablename":  "products_moderate_skew",
+        "indexname":  "products_moderate_skew_pkey",
+        "indexdef":  "CREATE UNIQUE INDEX products_moderate_skew_pkey ON public.products_moderate_skew USING btree (id)"
+    }
+]

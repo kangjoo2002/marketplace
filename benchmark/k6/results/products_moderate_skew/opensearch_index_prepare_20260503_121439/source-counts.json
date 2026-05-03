@@ -1,0 +1,15 @@
+﻿{
+    "productsModerateSkewCount":  10000000,
+    "productOptionsModerateSkewCount":  20500029,
+    "statusCounts":  {
+                         "ACTIVE":  9000000,
+                         "DELETED":  300000,
+                         "SOLD_OUT":  700000
+                     },
+    "scenarioCounts":  {
+                           "B1_selective_option_filter":  13380,
+                           "B2_broad_active_option_filter":  720000,
+                           "B3_deep_offset_option_filter":  13380
+                       },
+    "activeBlackMInStockProducts":  720000
+}

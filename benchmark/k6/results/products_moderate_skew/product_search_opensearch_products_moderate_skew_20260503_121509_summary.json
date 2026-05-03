@@ -1,0 +1,617 @@
+﻿{
+    "benchmark":  {
+                      "scenarioSetName":  "product-search-baseline-v1",
+                      "workloadVersion":  "product-search-baseline-v1",
+                      "profile":  "moderate_skew",
+                      "baseUrl":  "http://localhost:18082",
+                      "vus":  10,
+                      "duration":  "10m",
+                      "smokeOnly":  false,
+                      "readPath":  "OpenSearch API",
+                      "endpoint":  "/api/v1/products/search",
+                      "queryShape":  "OpenSearch products_search_read alias, nested options filter, from/size OFFSET-equivalent pagination",
+                      "openSearch":  {
+                                         "indexAlias":  "products_search_read",
+                                         "timeoutMs":  5000,
+                                         "circuitBreakerEnabled":  true
+                                     },
+                      "notes":  [
+                                    "OpenSearch API uses the feature-flagged /api/v1/products/search read path.",
+                                    "DB read path remains available only for fallback and must not be used by the primary OpenSearch result.",
+                                    "B1/B2/B3 constants are copied from the latest official k6 README/scripts for product-search-baseline-v1.",
+                                    "PROFILE is k6 metadata/tagging only; Spring application properties select the OpenSearch alias and read path."
+                                ],
+                      "operationalMetricsSource":  "measured app stdout log counts",
+                      "officialResultRequirements":  {
+                                                         "failedChecks":  0,
+                                                         "errorRate":  0,
+                                                         "fallbackCount":  0,
+                                                         "fallbackSuccessCount":  0,
+                                                         "timeoutCount":  0,
+                                                         "circuitBreakerOpenCount":  0,
+                                                         "shortCircuitedRequestCount":  0
+                                                     }
+                  },
+    "requestScenarios":  [
+                             {
+                                 "name":  "B1_selective_option_filter",
+                                 "weight":  40,
+                                 "purpose":  "Selective category and brand product search with price and option filters.",
+                                 "params":  {
+                                                "categoryId":  "75",
+                                                "brandId":  "943",
+                                                "status":  "ACTIVE",
+                                                "minPrice":  "10000",
+                                                "maxPrice":  "100000",
+                                                "color":  "BLACK",
+                                                "size":  "M",
+                                                "stockStatus":  "IN_STOCK",
+                                                "sort":  "reviewCountDesc",
+                                                "limit":  "50",
+                                                "offset":  "100"
+                                            }
+                             },
+                             {
+                                 "name":  "B2_broad_active_option_filter",
+                                 "weight":  40,
+                                 "purpose":  "Broad active-product option filter with latest-created ordering.",
+                                 "params":  {
+                                                "status":  "ACTIVE",
+                                                "color":  "BLACK",
+                                                "size":  "M",
+                                                "stockStatus":  "IN_STOCK",
+                                                "sort":  "createdAtDesc",
+                                                "limit":  "50",
+                                                "offset":  "100"
+                                            }
+                             },
+                             {
+                                 "name":  "B3_deep_offset_option_filter",
+                                 "weight":  20,
+                                 "purpose":  "Deeper page of the same selective category and brand product search as B1.",
+                                 "params":  {
+                                                "categoryId":  "75",
+                                                "brandId":  "943",
+                                                "status":  "ACTIVE",
+                                                "minPrice":  "10000",
+                                                "maxPrice":  "100000",
+                                                "color":  "BLACK",
+                                                "size":  "M",
+                                                "stockStatus":  "IN_STOCK",
+                                                "sort":  "reviewCountDesc",
+                                                "limit":  "50",
+                                                "offset":  "10000"
+                                            }
+                             }
+                         ],
+    "summary":  {
+                    "root_group":  {
+                                       "name":  "",
+                                       "path":  "",
+                                       "id":  "d41d8cd98f00b204e9800998ecf8427e",
+                                       "groups":  [
+
+                                                  ],
+                                       "checks":  [
+                                                      {
+                                                          "id":  "5caed2f71686e396b6b450c39f8b6b1a",
+                                                          "passes":  42317,
+                                                          "fails":  0,
+                                                          "name":  "B1_selective_option_filter: HTTP 200",
+                                                          "path":  "::B1_selective_option_filter: HTTP 200"
+                                                      },
+                                                      {
+                                                          "name":  "B1_selective_option_filter: items is an array",
+                                                          "path":  "::B1_selective_option_filter: items is an array",
+                                                          "id":  "58b1cbb4c542fa4d0ad74f604016dd09",
+                                                          "passes":  42317,
+                                                          "fails":  0
+                                                      },
+                                                      {
+                                                          "fails":  0,
+                                                          "name":  "B1_selective_option_filter: items length equals limit",
+                                                          "path":  "::B1_selective_option_filter: items length equals limit",
+                                                          "id":  "b930d1e67a683e5bb7a53c5e02a069f4",
+                                                          "passes":  42317
+                                                      },
+                                                      {
+                                                          "id":  "6c6b667830651bdf2d12778b1e158b63",
+                                                          "passes":  42317,
+                                                          "fails":  0,
+                                                          "name":  "B1_selective_option_filter: page exists",
+                                                          "path":  "::B1_selective_option_filter: page exists"
+                                                      },
+                                                      {
+                                                          "id":  "438e19c24bc52021b4ae30465b5c8a08",
+                                                          "passes":  42317,
+                                                          "fails":  0,
+                                                          "name":  "B1_selective_option_filter: page.limit matches request",
+                                                          "path":  "::B1_selective_option_filter: page.limit matches request"
+                                                      },
+                                                      {
+                                                          "fails":  0,
+                                                          "name":  "B1_selective_option_filter: page.offset matches request",
+                                                          "path":  "::B1_selective_option_filter: page.offset matches request",
+                                                          "id":  "28897b0eacbed1f51fff4eb9a44b6beb",
+                                                          "passes":  42317
+                                                      },
+                                                      {
+                                                          "name":  "B1_selective_option_filter: returnedCount is a number",
+                                                          "path":  "::B1_selective_option_filter: returnedCount is a number",
+                                                          "id":  "810f0113b0e7d878e2e7f02a1723a693",
+                                                          "passes":  42317,
+                                                          "fails":  0
+                                                      },
+                                                      {
+                                                          "passes":  42317,
+                                                          "fails":  0,
+                                                          "name":  "B1_selective_option_filter: returnedCount \u003e 0",
+                                                          "path":  "::B1_selective_option_filter: returnedCount \u003e 0",
+                                                          "id":  "69ce0204fdd382668233dbbe5dff0a2b"
+                                                      },
+                                                      {
+                                                          "name":  "B1_selective_option_filter: returnedCount equals limit",
+                                                          "path":  "::B1_selective_option_filter: returnedCount equals limit",
+                                                          "id":  "bf48727972f862fce202b2762ed74cf9",
+                                                          "passes":  42317,
+                                                          "fails":  0
+                                                      },
+                                                      {
+                                                          "fails":  0,
+                                                          "name":  "B1_selective_option_filter: returnedCount \u003c= limit",
+                                                          "path":  "::B1_selective_option_filter: returnedCount \u003c= limit",
+                                                          "id":  "5488623f030c9844c9579df80e4dc280",
+                                                          "passes":  42317
+                                                      },
+                                                      {
+                                                          "name":  "B2_broad_active_option_filter: HTTP 200",
+                                                          "path":  "::B2_broad_active_option_filter: HTTP 200",
+                                                          "id":  "992f2b682503675330903e883f6de1a4",
+                                                          "passes":  42309,
+                                                          "fails":  0
+                                                      },
+                                                      {
+                                                          "name":  "B2_broad_active_option_filter: items is an array",
+                                                          "path":  "::B2_broad_active_option_filter: items is an array",
+                                                          "id":  "fe53b1b09845fb245c9b9f69980cb432",
+                                                          "passes":  42309,
+                                                          "fails":  0
+                                                      },
+                                                      {
+                                                          "path":  "::B2_broad_active_option_filter: items length equals limit",
+                                                          "id":  "0b93ce5613e24d95ca95d0a47eb6fbeb",
+                                                          "passes":  42309,
+                                                          "fails":  0,
+                                                          "name":  "B2_broad_active_option_filter: items length equals limit"
+                                                      },
+                                                      {
+                                                          "name":  "B2_broad_active_option_filter: page exists",
+                                                          "path":  "::B2_broad_active_option_filter: page exists",
+                                                          "id":  "2fae671d7efa8054ba85337d8e7627cd",
+                                                          "passes":  42309,
+                                                          "fails":  0
+                                                      },
+                                                      {
+                                                          "name":  "B2_broad_active_option_filter: page.limit matches request",
+                                                          "path":  "::B2_broad_active_option_filter: page.limit matches request",
+                                                          "id":  "3657090faf2dc70ad7a0aee7d0b6e687",
+                                                          "passes":  42309,
+                                                          "fails":  0
+                                                      },
+                                                      {
+                                                          "passes":  42309,
+                                                          "fails":  0,
+                                                          "name":  "B2_broad_active_option_filter: page.offset matches request",
+                                                          "path":  "::B2_broad_active_option_filter: page.offset matches request",
+                                                          "id":  "b67f0e5e60349d396d92cbfe47530a72"
+                                                      },
+                                                      {
+                                                          "fails":  0,
+                                                          "name":  "B2_broad_active_option_filter: returnedCount is a number",
+                                                          "path":  "::B2_broad_active_option_filter: returnedCount is a number",
+                                                          "id":  "c73769446ad9ff573867a614525c98ca",
+                                                          "passes":  42309
+                                                      },
+                                                      {
+                                                          "name":  "B2_broad_active_option_filter: returnedCount \u003e 0",
+                                                          "path":  "::B2_broad_active_option_filter: returnedCount \u003e 0",
+                                                          "id":  "648259c9ca829b2967f714bc96687bae",
+                                                          "passes":  42309,
+                                                          "fails":  0
+                                                      },
+                                                      {
+                                                          "path":  "::B2_broad_active_option_filter: returnedCount equals limit",
+                                                          "id":  "f00ffafe558788074f0c1a412b4f617b",
+                                                          "passes":  42309,
+                                                          "fails":  0,
+                                                          "name":  "B2_broad_active_option_filter: returnedCount equals limit"
+                                                      },
+                                                      {
+                                                          "name":  "B2_broad_active_option_filter: returnedCount \u003c= limit",
+                                                          "path":  "::B2_broad_active_option_filter: returnedCount \u003c= limit",
+                                                          "id":  "ebb2f74ecb987b5828e4d358d15c4cbf",
+                                                          "passes":  42309,
+                                                          "fails":  0
+                                                      },
+                                                      {
+                                                          "passes":  21154,
+                                                          "fails":  0,
+                                                          "name":  "B3_deep_offset_option_filter: HTTP 200",
+                                                          "path":  "::B3_deep_offset_option_filter: HTTP 200",
+                                                          "id":  "4492a3d2bd495e10761c2d3a2e5e736e"
+                                                      },
+                                                      {
+                                                          "name":  "B3_deep_offset_option_filter: items is an array",
+                                                          "path":  "::B3_deep_offset_option_filter: items is an array",
+                                                          "id":  "7beca1f30b4e314383df047becd8df20",
+                                                          "passes":  21154,
+                                                          "fails":  0
+                                                      },
+                                                      {
+                                                          "name":  "B3_deep_offset_option_filter: items length equals limit",
+                                                          "path":  "::B3_deep_offset_option_filter: items length equals limit",
+                                                          "id":  "df9feee3073054fc00a68e7fd32db3f6",
+                                                          "passes":  21154,
+                                                          "fails":  0
+                                                      },
+                                                      {
+                                                          "path":  "::B3_deep_offset_option_filter: page exists",
+                                                          "id":  "85ab0ef8427da4fbb102ae682e320341",
+                                                          "passes":  21154,
+                                                          "fails":  0,
+                                                          "name":  "B3_deep_offset_option_filter: page exists"
+                                                      },
+                                                      {
+                                                          "name":  "B3_deep_offset_option_filter: page.limit matches request",
+                                                          "path":  "::B3_deep_offset_option_filter: page.limit matches request",
+                                                          "id":  "fcc494b061dc83398d194dc6c57e289a",
+                                                          "passes":  21154,
+                                                          "fails":  0
+                                                      },
+                                                      {
+                                                          "name":  "B3_deep_offset_option_filter: page.offset matches request",
+                                                          "path":  "::B3_deep_offset_option_filter: page.offset matches request",
+                                                          "id":  "2ec6ddba61c68a4027c09548b66be846",
+                                                          "passes":  21154,
+                                                          "fails":  0
+                                                      },
+                                                      {
+                                                          "passes":  21154,
+                                                          "fails":  0,
+                                                          "name":  "B3_deep_offset_option_filter: returnedCount is a number",
+                                                          "path":  "::B3_deep_offset_option_filter: returnedCount is a number",
+                                                          "id":  "528948b87b99fcdc713b290f20adee2b"
+                                                      },
+                                                      {
+                                                          "fails":  0,
+                                                          "name":  "B3_deep_offset_option_filter: returnedCount \u003e 0",
+                                                          "path":  "::B3_deep_offset_option_filter: returnedCount \u003e 0",
+                                                          "id":  "5280c405039c3cb134962ebd2e0a1832",
+                                                          "passes":  21154
+                                                      },
+                                                      {
+                                                          "passes":  21154,
+                                                          "fails":  0,
+                                                          "name":  "B3_deep_offset_option_filter: returnedCount equals limit",
+                                                          "path":  "::B3_deep_offset_option_filter: returnedCount equals limit",
+                                                          "id":  "8228e9af6e8c63d5585e82dcf7953e20"
+                                                      },
+                                                      {
+                                                          "name":  "B3_deep_offset_option_filter: returnedCount \u003c= limit",
+                                                          "path":  "::B3_deep_offset_option_filter: returnedCount \u003c= limit",
+                                                          "id":  "8ec0dd3a6b96418f2f9316b1c7e0eb0e",
+                                                          "passes":  21154,
+                                                          "fails":  0
+                                                      }
+                                                  ]
+                                   },
+                    "options":  {
+                                    "summaryTrendStats":  [
+                                                              "avg",
+                                                              "min",
+                                                              "med",
+                                                              "max",
+                                                              "p(90)",
+                                                              "p(95)"
+                                                          ],
+                                    "summaryTimeUnit":  "",
+                                    "noColor":  false
+                                },
+                    "state":  {
+                                  "isStdOutTTY":  false,
+                                  "isStdErrTTY":  false,
+                                  "testRunDurationMs":  600052.2131
+                              },
+                    "metrics":  {
+                                    "vus":  {
+                                                "type":  "gauge",
+                                                "contains":  "default",
+                                                "values":  {
+                                                               "value":  10,
+                                                               "min":  10,
+                                                               "max":  10
+                                                           }
+                                            },
+                                    "iteration_duration":  {
+                                                               "type":  "trend",
+                                                               "contains":  "time",
+                                                               "values":  {
+                                                                              "min":  17.3623,
+                                                                              "med":  51.950599999999994,
+                                                                              "max":  453.059,
+                                                                              "p(90)":  86.67581,
+                                                                              "p(95)":  100.05166499999997,
+                                                                              "avg":  56.70063077803062
+                                                                          }
+                                                           },
+                                    "http_req_receiving":  {
+                                                               "type":  "trend",
+                                                               "contains":  "time",
+                                                               "values":  {
+                                                                              "p(90)":  0.6741,
+                                                                              "p(95)":  1.0493099999999975,
+                                                                              "avg":  0.3033269275855531,
+                                                                              "min":  0,
+                                                                              "med":  0,
+                                                                              "max":  52.6795
+                                                                          }
+                                                           },
+                                    "data_received":  {
+                                                          "type":  "counter",
+                                                          "contains":  "data",
+                                                          "values":  {
+                                                                         "count":  1036241143,
+                                                                         "rate":  1726918.2920708738
+                                                                     }
+                                                      },
+                                    "iterations":  {
+                                                       "type":  "counter",
+                                                       "contains":  "default",
+                                                       "values":  {
+                                                                      "count":  105780,
+                                                                      "rate":  176.2846593857517
+                                                                  }
+                                                   },
+                                    "http_reqs":  {
+                                                      "type":  "counter",
+                                                      "contains":  "default",
+                                                      "values":  {
+                                                                     "count":  105780,
+                                                                     "rate":  176.2846593857517
+                                                                 }
+                                                  },
+                                    "http_req_connecting":  {
+                                                                "type":  "trend",
+                                                                "contains":  "time",
+                                                                "values":  {
+                                                                               "med":  0,
+                                                                               "max":  14.4829,
+                                                                               "p(90)":  0,
+                                                                               "p(95)":  0,
+                                                                               "avg":  0.019423042162979808,
+                                                                               "min":  0
+                                                                           }
+                                                            },
+                                    "http_req_tls_handshaking":  {
+                                                                     "contains":  "time",
+                                                                     "values":  {
+                                                                                    "p(95)":  0,
+                                                                                    "avg":  0,
+                                                                                    "min":  0,
+                                                                                    "med":  0,
+                                                                                    "max":  0,
+                                                                                    "p(90)":  0
+                                                                                },
+                                                                     "type":  "trend"
+                                                                 },
+                                    "http_req_waiting":  {
+                                                             "type":  "trend",
+                                                             "contains":  "time",
+                                                             "values":  {
+                                                                            "p(90)":  85.26106000000001,
+                                                                            "p(95)":  98.49086499999997,
+                                                                            "avg":  55.388439550954224,
+                                                                            "min":  16.8199,
+                                                                            "med":  50.6517,
+                                                                            "max":  354.9621
+                                                                        }
+                                                         },
+                                    "http_req_sending":  {
+                                                             "values":  {
+                                                                            "avg":  0.028144212516543726,
+                                                                            "min":  0,
+                                                                            "med":  0,
+                                                                            "max":  45.2112,
+                                                                            "p(90)":  0,
+                                                                            "p(95)":  0
+                                                                        },
+                                                             "type":  "trend",
+                                                             "contains":  "time"
+                                                         },
+                                    "data_sent":  {
+                                                      "type":  "counter",
+                                                      "contains":  "data",
+                                                      "values":  {
+                                                                     "count":  23462177,
+                                                                     "rate":  39100.22576000395
+                                                                 }
+                                                  },
+                                    "b3_deep_offset_option_filter_iterations":  {
+                                                                                    "contains":  "default",
+                                                                                    "values":  {
+                                                                                                   "count":  21154,
+                                                                                                   "rate":  35.253598833864544
+                                                                                               },
+                                                                                    "type":  "counter"
+                                                                                },
+                                    "b1_selective_option_filter_duration":  {
+                                                                                "contains":  "time",
+                                                                                "values":  {
+                                                                                               "max":  357.2765,
+                                                                                               "p(90)":  76.4263,
+                                                                                               "p(95)":  86.04545999999996,
+                                                                                               "avg":  54.873636699198826,
+                                                                                               "min":  23.6888,
+                                                                                               "med":  51.709
+                                                                                           },
+                                                                                "type":  "trend"
+                                                                            },
+                                    "b2_broad_active_option_filter_duration":  {
+                                                                                   "contains":  "time",
+                                                                                   "values":  {
+                                                                                                  "min":  16.9652,
+                                                                                                  "med":  40.1571,
+                                                                                                  "max":  170.2417,
+                                                                                                  "p(90)":  61.91156000000001,
+                                                                                                  "p(95)":  70.34295999999999,
+                                                                                                  "avg":  43.13889770025318
+                                                                                              },
+                                                                                   "type":  "trend"
+                                                                               },
+                                    "b1_selective_option_filter_iterations":  {
+                                                                                  "contains":  "default",
+                                                                                  "values":  {
+                                                                                                 "count":  42317,
+                                                                                                 "rate":  70.52219636251517
+                                                                                             },
+                                                                                  "type":  "counter"
+                                                                              },
+                                    "http_req_failed":  {
+                                                            "type":  "rate",
+                                                            "contains":  "default",
+                                                            "values":  {
+                                                                           "rate":  0,
+                                                                           "passes":  0,
+                                                                           "fails":  105780
+                                                                       },
+                                                            "thresholds":  {
+                                                                               "rate==0":  {
+                                                                                               "ok":  true
+                                                                                           }
+                                                                           }
+                                                        },
+                                    "vus_max":  {
+                                                    "type":  "gauge",
+                                                    "contains":  "default",
+                                                    "values":  {
+                                                                   "max":  10,
+                                                                   "value":  10,
+                                                                   "min":  10
+                                                               }
+                                                },
+                                    "b2_broad_active_option_filter_iterations":  {
+                                                                                     "type":  "counter",
+                                                                                     "contains":  "default",
+                                                                                     "values":  {
+                                                                                                    "count":  42309,
+                                                                                                    "rate":  70.50886418937199
+                                                                                                }
+                                                                                 },
+                                    "http_req_duration{expected_response:true}":  {
+                                                                                      "type":  "trend",
+                                                                                      "contains":  "time",
+                                                                                      "values":  {
+                                                                                                     "avg":  55.71991069105706,
+                                                                                                     "min":  16.9652,
+                                                                                                     "med":  50.9631,
+                                                                                                     "max":  357.2765,
+                                                                                                     "p(90)":  85.6289,
+                                                                                                     "p(95)":  98.89618499999996
+                                                                                                 }
+                                                                                  },
+                                    "checks":  {
+                                                   "thresholds":  {
+                                                                      "rate==1":  {
+                                                                                      "ok":  true
+                                                                                  }
+                                                                  },
+                                                   "type":  "rate",
+                                                   "contains":  "default",
+                                                   "values":  {
+                                                                  "rate":  1,
+                                                                  "passes":  1057800,
+                                                                  "fails":  0
+                                                              }
+                                               },
+                                    "http_req_duration":  {
+                                                              "contains":  "time",
+                                                              "values":  {
+                                                                             "avg":  55.71991069105706,
+                                                                             "min":  16.9652,
+                                                                             "med":  50.9631,
+                                                                             "max":  357.2765,
+                                                                             "p(90)":  85.6289,
+                                                                             "p(95)":  98.89618499999996
+                                                                         },
+                                                              "type":  "trend"
+                                                          },
+                                    "b2_broad_active_option_filter_returned_count":  {
+                                                                                         "type":  "trend",
+                                                                                         "contains":  "default",
+                                                                                         "values":  {
+                                                                                                        "med":  50,
+                                                                                                        "max":  50,
+                                                                                                        "p(90)":  50,
+                                                                                                        "p(95)":  50,
+                                                                                                        "avg":  50,
+                                                                                                        "min":  50
+                                                                                                    }
+                                                                                     },
+                                    "b3_deep_offset_option_filter_returned_count":  {
+                                                                                        "type":  "trend",
+                                                                                        "contains":  "default",
+                                                                                        "values":  {
+                                                                                                       "p(95)":  50,
+                                                                                                       "avg":  50,
+                                                                                                       "min":  50,
+                                                                                                       "med":  50,
+                                                                                                       "max":  50,
+                                                                                                       "p(90)":  50
+                                                                                                   }
+                                                                                    },
+                                    "http_req_blocked":  {
+                                                             "type":  "trend",
+                                                             "contains":  "time",
+                                                             "values":  {
+                                                                            "p(95)":  0,
+                                                                            "avg":  0.02985772924938548,
+                                                                            "min":  0,
+                                                                            "med":  0,
+                                                                            "max":  25.7151,
+                                                                            "p(90)":  0
+                                                                        }
+                                                         },
+                                    "b1_selective_option_filter_returned_count":  {
+                                                                                      "type":  "trend",
+                                                                                      "contains":  "default",
+                                                                                      "values":  {
+                                                                                                     "med":  50,
+                                                                                                     "max":  50,
+                                                                                                     "p(90)":  50,
+                                                                                                     "p(95)":  50,
+                                                                                                     "avg":  50,
+                                                                                                     "min":  50
+                                                                                                 }
+                                                                                  },
+                                    "b3_deep_offset_option_filter_duration":  {
+                                                                                  "type":  "trend",
+                                                                                  "contains":  "time",
+                                                                                  "values":  {
+                                                                                                 "avg":  82.57543943934934,
+                                                                                                 "min":  40.2944,
+                                                                                                 "med":  78.35695,
+                                                                                                 "max":  263.1623,
+                                                                                                 "p(90)":  112.5507,
+                                                                                                 "p(95)":  125.53488499999999
+                                                                                             }
+                                                                              }
+                                }
+                },
+    "operationalMetrics":  {
+                               "fallbackCount":  0,
+                               "fallbackSuccessCount":  0,
+                               "timeoutCount":  0,
+                               "circuitBreakerOpenCount":  0,
+                               "shortCircuitedRequestCount":  0
+                           }
+}

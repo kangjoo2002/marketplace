@@ -1,0 +1,7 @@
+﻿{
+    "index":  "products_search_benchmark_moderate_skew_v1",
+    "expected":  10000000,
+    "actual":  10000000,
+    "officialCorpus":  true,
+    "passes":  true
+}
