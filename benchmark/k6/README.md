@@ -10,6 +10,7 @@ Target endpoints:
 GET /api/v1/products/search
 GET /api/v1/products/search/db-tuned
 GET /api/v1/products/search/denormalized-db
+GET /api/v1/products/search with readpath.product-search.read-path=opensearch
 ```
 
 Benchmark scripts:
@@ -18,6 +19,7 @@ Benchmark scripts:
 benchmark/k6/product-search-baseline.js
 benchmark/k6/product-search-db-tuned.js
 benchmark/k6/product-search-denormalized-db.js
+benchmark/k6/product-search-opensearch.js
 ```
 
 Baseline query shape under the API:
@@ -43,6 +45,14 @@ Denormalized DB query shape under the API:
 product_search_documents_moderate_skew
 option_signatures filter
 OFFSET pagination
+```
+
+OpenSearch query shape under the API:
+
+```text
+products_search_read alias
+nested options filter
+from/size OFFSET-equivalent pagination
 ```
 
 The DB tuned API keeps PostgreSQL as the backing store and keeps the normalized
@@ -311,6 +321,157 @@ Use one B1 HTTP smoke, k6 smoke, and a 1m warm-up before the measured
 Denormalized DB API run. Exclude HTTP smoke, k6 smoke, and warm-up from
 official results.
 
+OpenSearch API runs use the same scenario constants through the feature-flagged
+API read path:
+
+Prepare the official OpenSearch benchmark corpus before running k6:
+
+```powershell
+.\benchmark\k6\prepare-product-search-opensearch-index.ps1 `
+  -OpenSearchUrl http://localhost:9200 `
+  -IndexName products_search_benchmark_moderate_skew_v1 `
+  -BatchSize 5000 `
+  -CreateHelperIndexes
+```
+
+The official OpenSearch benchmark corpus must match the previous
+`products_moderate_skew` benchmark source scope:
+
+```text
+10,000,000 root product documents from products_moderate_skew
+20,500,029 product option rows embedded as nested options[] objects
+```
+
+One product row is one OpenSearch root document. Option rows are not top-level
+OpenSearch documents. They are embedded under `options[]`, and the selected
+mapping must keep `options.type = nested`.
+
+The script creates/recreates:
+
+```text
+products_search_benchmark_moderate_skew_v1
+```
+
+and then updates:
+
+```text
+products_search_read
+products_search_write
+products_search_current
+```
+
+Before a full export, run the dry run and query-plan checks:
+
+```powershell
+.\benchmark\k6\prepare-product-search-opensearch-index.ps1 `
+  -OpenSearchUrl http://localhost:9200 `
+  -BatchSize 1000 `
+  -DryRun
+
+.\benchmark\k6\prepare-product-search-opensearch-index.ps1 `
+  -OpenSearchUrl http://localhost:9200 `
+  -BatchSize 1000 `
+  -ExplainOnly `
+  -CreateHelperIndexes
+```
+
+The export query must use keyset pagination on `products_moderate_skew.id` and
+look up options only for the current product batch. Local benchmark export may
+need this helper index:
+
+```sql
+CREATE INDEX IF NOT EXISTS idx_product_options_moderate_skew_product_id_benchmark_export
+ON product_options_moderate_skew (product_id);
+```
+
+This helper index is only for local corpus export/preparation. It is not an
+application read-path optimization claim, and it does not change the previous
+official DB/DB tuned/Denormalized DB benchmark artifacts. The primary
+OpenSearch measured result must still have DB fallback count 0.
+
+The script supports `-MaxProducts` for smoke/preflight only. Any corpus created
+with `-MaxProducts` is a partial corpus and must not be used as the primary
+official measured benchmark result. The k6 runner blocks official measurement
+when `products_search_read` does not point to
+`products_search_benchmark_moderate_skew_v1`, when `options` is not nested, or
+when the indexed root document count does not match `products_moderate_skew`.
+Partial runs do not update `products_search_read`, `products_search_write`, or
+`products_search_current`.
+
+Use OpenSearch `_count` for root product document validation. `_cat/indices`
+`docs.count` also includes nested option documents and is not the official root
+document count for this benchmark.
+
+Preparation artifacts are saved under:
+
+```text
+benchmark/k6/results/products_moderate_skew/opensearch_index_prepare_<timestamp>/
+```
+
+Expected validation artifacts include:
+
+```text
+source-counts.json
+source-index-inspection.json
+explain-plan-result.txt
+helper-index-result.json
+mapping-validation-result.json
+alias-validation-result.json
+index-count-validation-result.json
+status-count-validation-result.json
+b1-b2-b3-preflight-result.json
+opensearch-index-prepare-summary.md
+```
+
+After the full official corpus is prepared and validated, run the benchmark:
+
+```powershell
+.\benchmark\k6\run-product-search-opensearch.ps1 `
+  -Profile moderate_skew `
+  -OpenSearchUrl http://localhost:9200 `
+  -OpenSearchAlias products_search_read `
+  -VUs 10 `
+  -WarmupDuration 1m `
+  -Duration 10m
+```
+
+The OpenSearch runner starts the app with:
+
+```text
+readpath.product-search.read-path=opensearch
+readpath.product-search.open-search.index-alias=<OpenSearchAlias>
+readpath.product-search.open-search.timeout-ms=5000
+readpath.product-search.open-search.circuit-breaker.enabled=true
+```
+
+The official B3 workload uses `offset=10000` and `limit=50`; the benchmark
+index therefore requires `index.max_result_window >= 10050`. The preparation
+script applies and validates `max_result_window=10050` for the benchmark index.
+
+It executes:
+
+1. OpenSearch alias/mapping/full-corpus readiness validation
+2. HTTP smoke for B1/B2/B3
+3. k6 smoke
+4. warm-up run
+5. measured run
+
+HTTP smoke, k6 smoke, and warm-up are not official results. Only the measured
+summary JSON is the official OpenSearch artifact, and only when k6 checks pass
+and the measured app log shows:
+
+- fallback count = 0
+- fallback success count = 0
+- timeout count = 0
+- circuit breaker open count = 0
+- short-circuited request count = 0
+
+If fallback, timeout, circuit breaker open, or short-circuit activity occurs,
+the measured summary is renamed as a non-official fallback-involved artifact.
+If the OpenSearch alias is missing or does not have enough matching documents
+for the B1/B2/B3 offsets, the runner writes a blocked observation and creates no
+official measured summary.
+
 ## Results
 
 Measured results are saved under:
@@ -328,6 +489,8 @@ product_search_db_tuned_products_moderate_skew_YYYYMMDD_HHMMSS_summary.json
 product_search_db_tuned_products_moderate_skew_YYYYMMDD_HHMMSS_observations.md
 product_search_denormalized_db_products_moderate_skew_YYYYMMDD_HHMMSS_summary.json
 product_search_denormalized_db_products_moderate_skew_YYYYMMDD_HHMMSS_observations.md
+product_search_opensearch_products_moderate_skew_YYYYMMDD_HHMMSS_summary.json
+product_search_opensearch_products_moderate_skew_YYYYMMDD_HHMMSS_observations.md
 ```
 
 Do not commit huge raw logs or terminal dumps. Do not compare results across
@@ -471,7 +634,55 @@ Scenario-level p95:
 | `B3_deep_offset_option_filter` | 152.9373 ms |
 
 API p95 must not be compared with PostgreSQL `EXPLAIN` Execution Time.
-OpenSearch comparison remains a later stage.
+OpenSearch comparison is recorded separately in the OpenSearch API Result
+section.
+
+## OpenSearch API Result
+
+The OpenSearch API benchmark reuses the same `product-search-baseline-v1`
+`moderate_skew` workload as the official Baseline API, DB tuned API, and
+Denormalized DB API artifacts:
+
+- Same B1/B2/B3 constants.
+- Same B1/B2/B3 weights: 40/40/20.
+- Same deterministic sequence: `[B1, B1, B2, B2, B3]`.
+- Same VUs: 10.
+- Same warm-up duration: 1m.
+- Same measured duration: 10m.
+- Same local k6 execution mode.
+
+The OpenSearch API reads through `GET /api/v1/products/search` with
+`readpath.product-search.read-path=opensearch`. PostgreSQL remains available
+only as the DB fallback path and must not be used by the primary official
+OpenSearch performance result.
+
+The OpenSearch index must be a full `products_moderate_skew` corpus:
+10,000,000 root product documents with `product_options_moderate_skew` rows
+embedded as nested option objects. The `ACTIVE + BLACK/M/IN_STOCK` matching
+subset is useful for smoke/preflight validation only and is not an acceptable
+official measured benchmark corpus.
+
+Primary OpenSearch performance results require fallback count 0, fallback
+success count 0, timeout count 0, circuit breaker open count 0, and
+short-circuited request count 0. Results that involve fallback or circuit
+breaker activity are not representative of OpenSearch-only API performance and
+must not be recorded as the primary official OpenSearch result.
+
+Official OpenSearch API measured result recorded from the local synthetic run:
+
+```text
+benchmark/k6/results/products_moderate_skew/product_search_opensearch_products_moderate_skew_20260503_121509_summary.json
+benchmark/k6/results/products_moderate_skew/product_search_opensearch_products_moderate_skew_20260503_121509_observations.md
+```
+
+Current preparation status: `products_search_benchmark_moderate_skew_v1` is
+prepared with 10,000,000 root documents, nested options, `max_result_window`
+10050, and the official `products_search_read/write/current` aliases. The
+official OpenSearch k6 measured result below used OpenSearch timeout 5000 ms.
+
+| Profile | Scenario set | Read path | VUs | Duration | Warm-up | Total requests | Mixed p95 | B1 p95 | B2 p95 | B3 p95 | Throughput | Error rate | Failed checks | Fallback count | Timeout count | Circuit breaker open count | Short-circuited request count |
+|---|---|---|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `moderate_skew` | `product-search-baseline-v1` | OpenSearch API | 10 | 10m | 1m | 105780 | 98.89618499999996 ms | 86.04545999999996 ms | 70.34295999999999 ms | 125.53488499999999 ms | 176.2846593857517 req/s | 0 | 0 | 0 | 0 | 0 | 0 |
 
 ## Baseline vs DB Tuned vs Denormalized DB
 
@@ -494,4 +705,5 @@ p95. Use scenario-level p95 values when interpreting the mixed result.
 
 These are local synthetic benchmark results, not production capacity claims.
 API p95 must not be compared with PostgreSQL `EXPLAIN` Execution Time.
-OpenSearch comparison remains a later stage.
+OpenSearch comparison is included above for the official local synthetic
+OpenSearch result.

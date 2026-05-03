@@ -1,0 +1,38 @@
+﻿Sort  (cost=15799.81..15921.60 rows=48715 width=44)
+  Output: lines.line, lines.id, lines.line_order
+  Sort Key: lines.id, lines.line_order
+  CTE batch
+    ->  Limit  (cost=0.43..41.25 rows=1000 width=69)
+          Output: p.id, p.seller_id, p.category_id, p.brand_id, p.status, p.price, p.rating, p.review_count, p.created_at, p.updated_at
+          ->  Index Scan using products_moderate_skew_pkey on public.products_moderate_skew p  (cost=0.43..408143.51 rows=9999947 width=69)
+                Output: p.id, p.seller_id, p.category_id, p.brand_id, p.status, p.price, p.rating, p.review_count, p.created_at, p.updated_at
+                Index Cond: (p.id > 0)
+  CTE lines
+    ->  Append  (cost=0.00..10991.29 rows=48715 width=44)
+          ->  CTE Scan on batch b  (cost=0.00..30.00 rows=1000 width=44)
+                Output: b.id, 0, (json_build_object('index', json_build_object('_id', b.id)))::text
+          ->  Hash Left Join  (cost=9740.74..10717.72 rows=47715 width=44)
+                Output: b_1.id, 1, (json_build_object('productId', b_1.id, 'sellerId', b_1.seller_id, 'categoryId', b_1.category_id, 'brandId', b_1.brand_id, 'status', b_1.status, 'price', b_1.price, 'rating', b_1.rating, 'reviewCount', b_1.review_count, 'createdAt', to_char(b_1.created_at, 'YYYY-MM-DD"T"HH24:MI:SS'::text), 'updatedAt', to_char(b_1.updated_at, 'YYYY-MM-DD"T"HH24:MI:SS'::text), 'sourceUpdatedAt', to_char(b_1.updated_at, 'YYYY-MM-DD"T"HH24:MI:SS'::text), 'documentRefreshedAt', to_char(clock_timestamp(), 'YYYY-MM-DD"T"HH24:MI:SS'::text), 'options', COALESCE(bo.options, '[]'::json)))::text
+                Inner Unique: true
+                Hash Cond: (b_1.id = bo.product_id)
+                ->  CTE Scan on batch b_1  (cost=0.00..20.00 rows=1000 width=126)
+                      Output: b_1.id, b_1.seller_id, b_1.category_id, b_1.brand_id, b_1.status, b_1.price, b_1.rating, b_1.review_count, b_1.created_at, b_1.updated_at
+                ->  Hash  (cost=9621.45..9621.45 rows=9543 width=40)
+                      Output: bo.options, bo.product_id
+                      ->  Subquery Scan on bo  (cost=9311.30..9621.45 rows=9543 width=40)
+                            Output: bo.options, bo.product_id
+                            ->  GroupAggregate  (cost=9311.30..9526.02 rows=9543 width=40)
+                                  Output: po.product_id, json_agg(json_build_object('color', po.color, 'size', po.size, 'stockStatus', po.stock_status) ORDER BY po.id)
+                                  Group Key: po.product_id
+                                  ->  Sort  (cost=9311.30..9335.16 rows=9543 width=32)
+                                        Output: po.product_id, po.color, po.size, po.stock_status, po.id
+                                        Sort Key: po.product_id, po.id
+                                        ->  Nested Loop  (cost=0.44..8680.50 rows=9543 width=32)
+                                              Output: po.product_id, po.color, po.size, po.stock_status, po.id
+                                              ->  CTE Scan on batch b_2  (cost=0.00..20.00 rows=1000 width=8)
+                                                    Output: b_2.id, b_2.seller_id, b_2.category_id, b_2.brand_id, b_2.status, b_2.price, b_2.rating, b_2.review_count, b_2.created_at, b_2.updated_at
+                                              ->  Index Scan using idx_product_options_moderate_skew_product_id_benchmark_export on public.product_options_moderate_skew po  (cost=0.44..8.56 rows=10 width=32)
+                                                    Output: po.id, po.product_id, po.color, po.size, po.stock_status
+                                                    Index Cond: (po.product_id = b_2.id)
+  ->  CTE Scan on lines  (cost=0.00..974.30 rows=48715 width=44)
+        Output: lines.line, lines.id, lines.line_order

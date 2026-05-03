@@ -1,0 +1,20 @@
+﻿[
+    {
+        "scenario":  "B1_selective_option_filter",
+        "matchingCount":  13380,
+        "requiredMinCount":  150,
+        "passes":  true
+    },
+    {
+        "scenario":  "B2_broad_active_option_filter",
+        "matchingCount":  720000,
+        "requiredMinCount":  150,
+        "passes":  true
+    },
+    {
+        "scenario":  "B3_deep_offset_option_filter",
+        "matchingCount":  13380,
+        "requiredMinCount":  10050,
+        "passes":  true
+    }
+]

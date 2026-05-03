@@ -1,0 +1,6 @@
+﻿{
+    "index":  "products_search_benchmark_moderate_skew_v1",
+    "maxResultWindow":  10050,
+    "requiredMinMaxResultWindow":  10050,
+    "passes":  true
+}
