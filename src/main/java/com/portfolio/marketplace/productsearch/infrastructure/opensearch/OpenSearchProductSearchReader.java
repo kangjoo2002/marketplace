@@ -1,8 +1,9 @@
-package com.portfolio.readpath_lab.product.opensearch;
+package com.portfolio.marketplace.productsearch.infrastructure.opensearch;
 
-import com.portfolio.readpath_lab.product.api.ProductSearchItemResponse;
-import com.portfolio.readpath_lab.product.api.ProductSearchRequest;
-import com.portfolio.readpath_lab.product.application.ProductSearchFallbackMetrics.OpenSearchFailureReason;
+import com.portfolio.marketplace.productsearch.domain.ProductSearchCondition;
+import com.portfolio.marketplace.productsearch.domain.ProductSearchItem;
+import com.portfolio.marketplace.productsearch.service.ProductSearchFallbackMetrics.OpenSearchFailureReason;
+import com.portfolio.marketplace.productsearch.service.port.ProductSearchIndexReader;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -13,30 +14,31 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 
 @Component
-public class OpenSearchProductSearchAdapter {
+public class OpenSearchProductSearchReader implements ProductSearchIndexReader {
 
 	private final OpenSearchHttpClient openSearchHttpClient;
 
-	public OpenSearchProductSearchAdapter(OpenSearchHttpClient openSearchHttpClient) {
+	public OpenSearchProductSearchReader(OpenSearchHttpClient openSearchHttpClient) {
 		this.openSearchHttpClient = openSearchHttpClient;
 	}
 
-	public List<ProductSearchItemResponse> search(ProductSearchRequest request) {
-		Map<String, Object> response = openSearchHttpClient.search(buildQuery(request));
+	@Override
+	public List<ProductSearchItem> search(ProductSearchCondition condition) {
+		Map<String, Object> response = openSearchHttpClient.search(buildQuery(condition));
 		return parseResponse(response);
 	}
 
-	Map<String, Object> buildQuery(ProductSearchRequest request) {
+	Map<String, Object> buildQuery(ProductSearchCondition condition) {
 		List<Object> filters = new ArrayList<>();
-		addTermFilter(filters, "categoryId", request.getCategoryId());
-		addTermFilter(filters, "brandId", request.getBrandId());
-		addTermFilter(filters, "status", request.getStatus() == null ? null : request.getStatus().name());
-		addPriceRangeFilter(filters, request);
-		addNestedOptionFilter(filters, request);
+		addTermFilter(filters, "categoryId", condition.getCategoryId());
+		addTermFilter(filters, "brandId", condition.getBrandId());
+		addTermFilter(filters, "status", condition.getStatus() == null ? null : condition.getStatus().name());
+		addPriceRangeFilter(filters, condition);
+		addNestedOptionFilter(filters, condition);
 
 		Map<String, Object> query = new LinkedHashMap<>();
-		query.put("from", request.getOffset());
-		query.put("size", request.getLimit());
+		query.put("from", condition.getOffset());
+		query.put("size", condition.getLimit());
 		query.put("_source", List.of(
 				"productId",
 				"sellerId",
@@ -49,7 +51,7 @@ public class OpenSearchProductSearchAdapter {
 				"createdAt",
 				"updatedAt"
 		));
-		query.put("sort", sort(request.getSort()));
+		query.put("sort", sort(condition.getSort()));
 		query.put("query", Map.of("bool", Map.of("filter", filters)));
 		return query;
 	}
@@ -61,29 +63,29 @@ public class OpenSearchProductSearchAdapter {
 		filters.add(Map.of("term", Map.of(field, value)));
 	}
 
-	private static void addPriceRangeFilter(List<Object> filters, ProductSearchRequest request) {
-		if (request.getMinPrice() == null && request.getMaxPrice() == null) {
+	private static void addPriceRangeFilter(List<Object> filters, ProductSearchCondition condition) {
+		if (condition.getMinPrice() == null && condition.getMaxPrice() == null) {
 			return;
 		}
 
 		Map<String, Object> priceRange = new LinkedHashMap<>();
-		if (request.getMinPrice() != null) {
-			priceRange.put("gte", request.getMinPrice());
+		if (condition.getMinPrice() != null) {
+			priceRange.put("gte", condition.getMinPrice());
 		}
-		if (request.getMaxPrice() != null) {
-			priceRange.put("lte", request.getMaxPrice());
+		if (condition.getMaxPrice() != null) {
+			priceRange.put("lte", condition.getMaxPrice());
 		}
 		filters.add(Map.of("range", Map.of("price", priceRange)));
 	}
 
-	private static void addNestedOptionFilter(List<Object> filters, ProductSearchRequest request) {
+	private static void addNestedOptionFilter(List<Object> filters, ProductSearchCondition condition) {
 		List<Object> optionFilters = new ArrayList<>();
-		addTermFilter(optionFilters, "options.color", request.getColor() == null ? null : request.getColor().name());
-		addTermFilter(optionFilters, "options.size", request.getSize() == null ? null : request.getSize().name());
+		addTermFilter(optionFilters, "options.color", condition.getColor() == null ? null : condition.getColor().name());
+		addTermFilter(optionFilters, "options.size", condition.getSize() == null ? null : condition.getSize().name());
 		addTermFilter(
 				optionFilters,
 				"options.stockStatus",
-				request.getStockStatus() == null ? null : request.getStockStatus().name()
+				condition.getStockStatus() == null ? null : condition.getStockStatus().name()
 		);
 
 		if (optionFilters.isEmpty()) {
@@ -122,7 +124,7 @@ public class OpenSearchProductSearchAdapter {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static List<ProductSearchItemResponse> parseResponse(Map<String, Object> response) {
+	private static List<ProductSearchItem> parseResponse(Map<String, Object> response) {
 		Object hitsObject = response.get("hits");
 		if (!(hitsObject instanceof Map<?, ?> hits)) {
 			throw malformed("OpenSearch response did not contain hits");
@@ -133,7 +135,7 @@ public class OpenSearchProductSearchAdapter {
 			throw malformed("OpenSearch response hits.hits was not an array");
 		}
 
-		List<ProductSearchItemResponse> items = new ArrayList<>();
+		List<ProductSearchItem> items = new ArrayList<>();
 		for (Object hitObject : hitList) {
 			if (!(hitObject instanceof Map<?, ?> hit)) {
 				throw malformed("OpenSearch hit was not an object");
@@ -147,8 +149,8 @@ public class OpenSearchProductSearchAdapter {
 		return items;
 	}
 
-	private static ProductSearchItemResponse toItem(Map<String, Object> source) {
-		return new ProductSearchItemResponse(
+	private static ProductSearchItem toItem(Map<String, Object> source) {
+		return new ProductSearchItem(
 				longValue(source, "productId"),
 				longValue(source, "sellerId"),
 				longValue(source, "categoryId"),

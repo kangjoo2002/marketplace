@@ -1,7 +1,7 @@
-package com.portfolio.readpath_lab.product.opensearch;
+package com.portfolio.marketplace.productsearch.infrastructure.opensearch;
 
-import com.portfolio.readpath_lab.product.application.ProductSearchFallbackMetrics.OpenSearchFailureReason;
-import com.portfolio.readpath_lab.product.application.ProductSearchReadPathProperties;
+import com.portfolio.marketplace.productsearch.service.ProductSearchFallbackMetrics.OpenSearchFailureReason;
+import com.portfolio.marketplace.productsearch.config.ProductSearchReadPathProperties;
 import java.net.SocketTimeoutException;
 import java.util.Map;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -82,3 +82,7 @@ public class RestClientOpenSearchHttpClient implements OpenSearchHttpClient {
 		return value.replaceAll("^/+", "").replaceAll("/+$", "");
 	}
 }
+
+
+
+

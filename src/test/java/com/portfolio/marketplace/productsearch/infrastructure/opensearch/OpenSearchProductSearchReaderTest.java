@@ -1,39 +1,39 @@
-package com.portfolio.readpath_lab.product.opensearch;
+package com.portfolio.marketplace.productsearch.infrastructure.opensearch;
 
-import com.portfolio.readpath_lab.product.api.ProductSearchItemResponse;
-import com.portfolio.readpath_lab.product.api.ProductSearchRequest;
-import com.portfolio.readpath_lab.product.domain.ProductColor;
-import com.portfolio.readpath_lab.product.domain.ProductSize;
-import com.portfolio.readpath_lab.product.domain.ProductStatus;
-import com.portfolio.readpath_lab.product.domain.StockStatus;
+import com.portfolio.marketplace.product.domain.ProductColor;
+import com.portfolio.marketplace.product.domain.ProductSize;
+import com.portfolio.marketplace.product.domain.ProductStatus;
+import com.portfolio.marketplace.product.domain.StockStatus;
+import com.portfolio.marketplace.productsearch.domain.ProductSearchCondition;
+import com.portfolio.marketplace.productsearch.domain.ProductSearchItem;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class OpenSearchProductSearchAdapterTest {
+class OpenSearchProductSearchReaderTest {
 
 	@Test
 	void buildsNestedOptionQueryForSameOptionRowSemantics() {
 		CapturingOpenSearchHttpClient httpClient = new CapturingOpenSearchHttpClient(Map.of(
 				"hits", Map.of("hits", List.of())
 		));
-		OpenSearchProductSearchAdapter adapter = new OpenSearchProductSearchAdapter(httpClient);
-		ProductSearchRequest request = new ProductSearchRequest();
-		request.setCategoryId(75L);
-		request.setBrandId(943L);
-		request.setStatus(ProductStatus.ACTIVE);
-		request.setMinPrice(10000);
-		request.setMaxPrice(100000);
-		request.setColor(ProductColor.BLACK);
-		request.setSize(ProductSize.M);
-		request.setStockStatus(StockStatus.IN_STOCK);
-		request.setSort("reviewCountDesc");
-		request.setLimit(50);
-		request.setOffset(100);
+		OpenSearchProductSearchReader reader = new OpenSearchProductSearchReader(httpClient);
+		ProductSearchCondition condition = new ProductSearchCondition();
+		condition.setCategoryId(75L);
+		condition.setBrandId(943L);
+		condition.setStatus(ProductStatus.ACTIVE);
+		condition.setMinPrice(10000);
+		condition.setMaxPrice(100000);
+		condition.setColor(ProductColor.BLACK);
+		condition.setSize(ProductSize.M);
+		condition.setStockStatus(StockStatus.IN_STOCK);
+		condition.setSort("reviewCountDesc");
+		condition.setLimit(50);
+		condition.setOffset(100);
 
-		adapter.search(request);
+		reader.search(condition);
 
 		assertThat(httpClient.query).containsEntry("from", 100);
 		assertThat(httpClient.query).containsEntry("size", 50);
@@ -47,7 +47,7 @@ class OpenSearchProductSearchAdapterTest {
 	}
 
 	@Test
-	void mapsOpenSearchSourceToApiItemShape() {
+	void mapsOpenSearchSourceToProductSearchItem() {
 		CapturingOpenSearchHttpClient httpClient = new CapturingOpenSearchHttpClient(Map.of(
 				"hits", Map.of(
 						"hits", List.of(Map.of(
@@ -66,12 +66,12 @@ class OpenSearchProductSearchAdapterTest {
 						))
 				)
 		));
-		OpenSearchProductSearchAdapter adapter = new OpenSearchProductSearchAdapter(httpClient);
+		OpenSearchProductSearchReader reader = new OpenSearchProductSearchReader(httpClient);
 
-		List<ProductSearchItemResponse> items = adapter.search(new ProductSearchRequest());
+		List<ProductSearchItem> items = reader.search(new ProductSearchCondition());
 
 		assertThat(items).hasSize(1);
-		ProductSearchItemResponse item = items.get(0);
+		ProductSearchItem item = items.get(0);
 		assertThat(item.id()).isEqualTo(1L);
 		assertThat(item.sellerId()).isEqualTo(2L);
 		assertThat(item.status()).isEqualTo("ACTIVE");

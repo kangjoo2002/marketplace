@@ -1,6 +1,6 @@
-package com.portfolio.readpath_lab.product.opensearch;
+package com.portfolio.marketplace.productsearch.infrastructure.opensearch;
 
-import com.portfolio.readpath_lab.product.application.ProductSearchFallbackMetrics.OpenSearchFailureReason;
+import com.portfolio.marketplace.productsearch.service.ProductSearchFallbackMetrics.OpenSearchFailureReason;
 
 public class OpenSearchProductSearchException extends RuntimeException {
 
@@ -20,3 +20,6 @@ public class OpenSearchProductSearchException extends RuntimeException {
 		return reason;
 	}
 }
+
+
+

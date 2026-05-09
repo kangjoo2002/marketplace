@@ -1,5 +1,6 @@
-package com.portfolio.readpath_lab.product.application;
+package com.portfolio.marketplace.productsearch.service;
 
+import com.portfolio.marketplace.productsearch.config.ProductSearchReadPathProperties;
 import java.time.Clock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,19 +24,19 @@ public class ProductSearchCircuitBreaker {
 	@Autowired
 	public ProductSearchCircuitBreaker(
 			ProductSearchReadPathProperties readPathProperties,
-			ProductSearchFallbackMetrics fallbackMetrics
-	) {
-		this(readPathProperties, fallbackMetrics, Clock.systemUTC());
-	}
-
-	ProductSearchCircuitBreaker(
-			ProductSearchReadPathProperties readPathProperties,
 			ProductSearchFallbackMetrics fallbackMetrics,
 			Clock clock
 	) {
 		this.readPathProperties = readPathProperties;
 		this.fallbackMetrics = fallbackMetrics;
 		this.clock = clock;
+	}
+
+	ProductSearchCircuitBreaker(
+			ProductSearchReadPathProperties readPathProperties,
+			ProductSearchFallbackMetrics fallbackMetrics
+	) {
+		this(readPathProperties, fallbackMetrics, Clock.systemUTC());
 	}
 
 	public synchronized boolean tryAcquirePermission() {
@@ -175,3 +176,7 @@ public class ProductSearchCircuitBreaker {
 	) {
 	}
 }
+
+
+
+

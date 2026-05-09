@@ -1,4 +1,4 @@
-package com.portfolio.readpath_lab.product.application;
+package com.portfolio.marketplace.productsearch.service;
 
 import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.stereotype.Component;
@@ -91,3 +91,6 @@ public class ProductSearchFallbackMetrics {
 	) {
 	}
 }
+
+
+
