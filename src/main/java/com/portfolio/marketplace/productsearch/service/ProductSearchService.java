@@ -3,21 +3,21 @@ package com.portfolio.marketplace.productsearch.service;
 import com.portfolio.marketplace.productsearch.domain.ProductSearchCondition;
 import com.portfolio.marketplace.productsearch.dto.request.ProductSearchRequest;
 import com.portfolio.marketplace.productsearch.dto.response.ProductSearchResponse;
-import com.portfolio.marketplace.productsearch.repository.ProductSearchRepository;
+import com.portfolio.marketplace.productsearch.repository.ProductSearchBenchmarkRepository;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ProductSearchService {
 
 	private final ProductSearchReadPathRouter readPathRouter;
-	private final ProductSearchRepository productSearchRepository;
+	private final ProductSearchBenchmarkRepository productSearchBenchmarkRepository;
 
 	public ProductSearchService(
 			ProductSearchReadPathRouter readPathRouter,
-			ProductSearchRepository productSearchRepository
+			ProductSearchBenchmarkRepository productSearchBenchmarkRepository
 	) {
 		this.readPathRouter = readPathRouter;
-		this.productSearchRepository = productSearchRepository;
+		this.productSearchBenchmarkRepository = productSearchBenchmarkRepository;
 	}
 
 	public ProductSearchResponse search(ProductSearchRequest request) {
@@ -32,7 +32,7 @@ public class ProductSearchService {
 	public ProductSearchResponse searchDbTuned(ProductSearchRequest request) {
 		ProductSearchCondition condition = toCondition(request);
 		return ProductSearchResponse.from(
-				productSearchRepository.searchDbTuned(condition),
+				productSearchBenchmarkRepository.searchDbTuned(condition),
 				condition.getLimit(),
 				condition.getOffset()
 		);
@@ -41,7 +41,7 @@ public class ProductSearchService {
 	public ProductSearchResponse searchDenormalizedDb(ProductSearchRequest request) {
 		ProductSearchCondition condition = toCondition(request);
 		return ProductSearchResponse.from(
-				productSearchRepository.searchDenormalizedDb(condition),
+				productSearchBenchmarkRepository.searchDenormalizedDb(condition),
 				condition.getLimit(),
 				condition.getOffset()
 		);
