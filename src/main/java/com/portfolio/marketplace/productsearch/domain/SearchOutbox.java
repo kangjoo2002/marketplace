@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "search_outbox")
@@ -41,6 +42,9 @@ public class SearchOutbox {
 
 	@Column(name = "retry_count", nullable = false)
 	private Integer retryCount;
+
+	@Column(name = "claim_token")
+	private UUID claimToken;
 
 	@Column(name = "last_error")
 	private String lastError;

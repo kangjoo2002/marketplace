@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,30 +28,28 @@ public class SearchOutboxStore {
 	}
 
 	@Transactional
-	public void markDone(long eventId) {
-		assertUpdated(eventId, searchOutboxJpaRepository.markDone(eventId, now()));
+	public void markDone(SearchOutboxEvent event) {
+		searchOutboxJpaRepository.markDone(event.id(), claimToken(event), now());
 	}
 
 	@Transactional
-	public void markPendingRetry(long eventId, String lastError, LocalDateTime nextRetryAt) {
-		int updated = searchOutboxJpaRepository.markPendingRetry(
-				eventId,
+	public void markPendingRetry(SearchOutboxEvent event, String lastError, LocalDateTime nextRetryAt) {
+		searchOutboxJpaRepository.markPendingRetry(
+				event.id(),
+				claimToken(event),
 				truncate(lastError),
 				toOffsetDateTime(nextRetryAt),
 				now()
 		);
-		assertUpdated(eventId, updated);
 	}
 
 	@Transactional
-	public void markFailed(long eventId, String lastError) {
-		assertUpdated(eventId, searchOutboxJpaRepository.markFailed(eventId, truncate(lastError), now()));
+	public void markFailed(SearchOutboxEvent event, String lastError) {
+		searchOutboxJpaRepository.markFailed(event.id(), claimToken(event), truncate(lastError), now());
 	}
 
-	private static void assertUpdated(long eventId, int updated) {
-		if (updated != 1) {
-			throw new IllegalStateException("Search outbox event not found: " + eventId);
-		}
+	private static UUID claimToken(SearchOutboxEvent event) {
+		return UUID.fromString(event.claimToken());
 	}
 
 	private static OffsetDateTime toOffsetDateTime(LocalDateTime value) {

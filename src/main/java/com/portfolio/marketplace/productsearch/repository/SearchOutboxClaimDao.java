@@ -3,6 +3,7 @@ package com.portfolio.marketplace.productsearch.repository;
 import com.portfolio.marketplace.productsearch.domain.SearchOutboxEvent;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -16,6 +17,7 @@ public class SearchOutboxClaimDao {
 	}
 
 	public List<SearchOutboxEvent> claimPendingProductEvents(int batchSize, long processingTimeoutMs) {
+		UUID claimToken = UUID.randomUUID();
 		String sql = """
 				WITH claimed AS (
 				    SELECT id
@@ -37,6 +39,7 @@ public class SearchOutboxClaimDao {
 				)
 				UPDATE search_outbox outbox
 				SET status = 'PROCESSING',
+				    claim_token = :claimToken,
 				    next_retry_at = NULL,
 				    updated_at = now()
 				FROM claimed
@@ -47,13 +50,15 @@ public class SearchOutboxClaimDao {
 				    outbox.event_type,
 				    outbox.schema_version,
 				    outbox.payload::text AS payload,
-				    outbox.retry_count
+				    outbox.retry_count,
+				    outbox.claim_token::text AS claim_token
 				""";
 		return jdbcTemplate.query(
 				sql,
 				Map.of(
 						"batchSize", batchSize,
-						"processingTimeoutMs", processingTimeoutMs
+						"processingTimeoutMs", processingTimeoutMs,
+						"claimToken", claimToken
 				),
 				(rs, rowNum) -> new SearchOutboxEvent(
 						rs.getLong("id"),
@@ -61,7 +66,8 @@ public class SearchOutboxClaimDao {
 						rs.getString("event_type"),
 						rs.getInt("schema_version"),
 						rs.getString("payload"),
-						rs.getInt("retry_count")
+						rs.getInt("retry_count"),
+						rs.getString("claim_token")
 				)
 		);
 	}

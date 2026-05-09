@@ -30,9 +30,7 @@ final class ProductSearchQueryExpressions {
 		if (condition.getMaxPrice() != null) {
 			builder.and(product.price.loe(condition.getMaxPrice()));
 		}
-		if (hasOptionFilter(condition)) {
-			builder.and(optionExists(condition, product));
-		}
+		builder.and(optionExists(condition, product));
 		return builder;
 	}
 
@@ -56,12 +54,6 @@ final class ProductSearchQueryExpressions {
 			};
 			default -> throw new IllegalArgumentException("Unsupported sort: " + sort);
 		};
-	}
-
-	private static boolean hasOptionFilter(ProductSearchCondition condition) {
-		return condition.getColor() != null
-				|| condition.getSize() != null
-				|| condition.getStockStatus() != null;
 	}
 
 	private static Predicate optionExists(ProductSearchCondition condition, QProduct product) {

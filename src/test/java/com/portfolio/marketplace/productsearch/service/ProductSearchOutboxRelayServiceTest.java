@@ -16,7 +16,6 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -25,6 +24,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class ProductSearchOutboxRelayServiceTest {
+
+	private static final String CLAIM_TOKEN = "00000000-0000-0000-0000-000000000001";
 
 	private final SearchOutboxStore outboxStore = mock(SearchOutboxStore.class);
 	private final ProductSearchDocumentRepository documentRepository = mock(ProductSearchDocumentRepository.class);
@@ -41,32 +42,32 @@ class ProductSearchOutboxRelayServiceTest {
 
 	@Test
 	void upsertsSourceDocumentAndMarksDone() {
-		SearchOutboxEvent event = new SearchOutboxEvent(1L, 10L, "PRODUCT_UPDATED", 1, "{}", 0);
+		SearchOutboxEvent event = event(1L, "PRODUCT_UPDATED", 0);
 		when(outboxStore.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
 		when(documentRepository.findByProductId(10L)).thenReturn(Optional.of(activeDocument()));
 
 		relayService.processBatch();
 
 		verify(indexWriter).upsert(activeDocument().refreshedAt(LocalDateTime.parse("2026-05-02T10:02:00")));
-		verify(outboxStore).markDone(1L);
-		verify(outboxStore, never()).markFailed(anyLong(), any());
+		verify(outboxStore).markDone(event);
+		verify(outboxStore, never()).markFailed(any(SearchOutboxEvent.class), any());
 	}
 
 	@Test
 	void deletesDocumentForProductDeletedEvent() {
-		SearchOutboxEvent event = new SearchOutboxEvent(2L, 10L, "PRODUCT_DELETED", 1, "{}", 0);
+		SearchOutboxEvent event = event(2L, "PRODUCT_DELETED", 0);
 		when(outboxStore.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
 
 		relayService.processBatch();
 
 		verify(indexWriter).deleteByProductId(10L);
 		verify(documentRepository, never()).findByProductId(10L);
-		verify(outboxStore).markDone(2L);
+		verify(outboxStore).markDone(event);
 	}
 
 	@Test
 	void deletesDocumentWhenSourceStatusIsDeleted() {
-		SearchOutboxEvent event = new SearchOutboxEvent(3L, 10L, "PRODUCT_STATUS_CHANGED", 1, "{}", 0);
+		SearchOutboxEvent event = event(3L, "PRODUCT_STATUS_CHANGED", 0);
 		when(outboxStore.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
 		when(documentRepository.findByProductId(10L)).thenReturn(Optional.of(deletedDocument()));
 
@@ -74,12 +75,12 @@ class ProductSearchOutboxRelayServiceTest {
 
 		verify(indexWriter).deleteByProductId(10L);
 		verify(indexWriter, never()).upsert(any());
-		verify(outboxStore).markDone(3L);
+		verify(outboxStore).markDone(event);
 	}
 
 	@Test
 	void schedulesRetryWhenIndexWriteFailsBeforeMaxRetry() {
-		SearchOutboxEvent event = new SearchOutboxEvent(4L, 10L, "PRODUCT_UPDATED", 1, "{}", 0);
+		SearchOutboxEvent event = event(4L, "PRODUCT_UPDATED", 0);
 		when(outboxStore.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
 		when(documentRepository.findByProductId(10L)).thenReturn(Optional.of(activeDocument()));
 		org.mockito.Mockito.doThrow(new IllegalStateException("OpenSearch down"))
@@ -89,17 +90,17 @@ class ProductSearchOutboxRelayServiceTest {
 		relayService.processBatch();
 
 		verify(outboxStore).markPendingRetry(
-				eq(4L),
+				eq(event),
 				contains("OpenSearch down"),
 				eq(LocalDateTime.parse("2026-05-02T10:02:10"))
 		);
-		verify(outboxStore, never()).markDone(4L);
-		verify(outboxStore, never()).markFailed(anyLong(), any());
+		verify(outboxStore, never()).markDone(event);
+		verify(outboxStore, never()).markFailed(any(SearchOutboxEvent.class), any());
 	}
 
 	@Test
 	void marksFailedWhenIndexWriteFailsAtMaxRetry() {
-		SearchOutboxEvent event = new SearchOutboxEvent(5L, 10L, "PRODUCT_UPDATED", 1, "{}", 2);
+		SearchOutboxEvent event = event(5L, "PRODUCT_UPDATED", 2);
 		when(outboxStore.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
 		when(documentRepository.findByProductId(10L)).thenReturn(Optional.of(activeDocument()));
 		org.mockito.Mockito.doThrow(new IllegalStateException("OpenSearch down"))
@@ -108,9 +109,13 @@ class ProductSearchOutboxRelayServiceTest {
 
 		relayService.processBatch();
 
-		verify(outboxStore).markFailed(eq(5L), contains("OpenSearch down"));
-		verify(outboxStore, never()).markPendingRetry(anyLong(), any(), any());
-		verify(outboxStore, never()).markDone(5L);
+		verify(outboxStore).markFailed(eq(event), contains("OpenSearch down"));
+		verify(outboxStore, never()).markPendingRetry(any(SearchOutboxEvent.class), any(), any());
+		verify(outboxStore, never()).markDone(event);
+	}
+
+	private static SearchOutboxEvent event(long id, String eventType, int retryCount) {
+		return new SearchOutboxEvent(id, 10L, eventType, 1, "{}", retryCount, CLAIM_TOKEN);
 	}
 
 	private static ProductSearchDocument activeDocument() {

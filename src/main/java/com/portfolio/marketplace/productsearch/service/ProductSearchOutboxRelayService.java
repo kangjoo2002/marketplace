@@ -54,7 +54,7 @@ public class ProductSearchOutboxRelayService {
 		try {
 			if (event.isProductDeleteEvent()) {
 				indexWriter.deleteByProductId(event.aggregateId());
-				outboxStore.markDone(event.id());
+				outboxStore.markDone(event);
 				return;
 			}
 
@@ -64,7 +64,7 @@ public class ProductSearchOutboxRelayService {
 							this::upsertOrDeleteDeletedDocument,
 							() -> indexWriter.deleteByProductId(event.aggregateId())
 					);
-			outboxStore.markDone(event.id());
+			outboxStore.markDone(event);
 		} catch (RuntimeException exception) {
 			String errorMessage = exception.getMessage() == null
 					? exception.getClass().getSimpleName()
@@ -82,12 +82,12 @@ public class ProductSearchOutboxRelayService {
 
 	private void markFailure(SearchOutboxEvent event, String errorMessage) {
 		if (event.retryCount() + 1 >= indexingProperties.getRelay().getMaxRetryCount()) {
-			outboxStore.markFailed(event.id(), errorMessage);
+			outboxStore.markFailed(event, errorMessage);
 			return;
 		}
 		LocalDateTime nextRetryAt = LocalDateTime.now(clock)
 				.plusNanos(indexingProperties.getRelay().getRetryDelayMs() * 1_000_000);
-		outboxStore.markPendingRetry(event.id(), errorMessage, nextRetryAt);
+		outboxStore.markPendingRetry(event, errorMessage, nextRetryAt);
 	}
 
 	private ProductSearchDocument refresh(ProductSearchDocument document) {

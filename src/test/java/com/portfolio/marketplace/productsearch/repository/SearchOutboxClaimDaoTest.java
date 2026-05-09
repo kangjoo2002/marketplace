@@ -3,6 +3,7 @@ package com.portfolio.marketplace.productsearch.repository;
 import com.portfolio.marketplace.productsearch.domain.SearchOutboxEvent;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
@@ -37,8 +38,12 @@ class SearchOutboxClaimDaoTest {
 		assertThat(sql).contains("status = 'PROCESSING'");
 		assertThat(sql).contains("updated_at <= now() - (:processingTimeoutMs * INTERVAL '1 millisecond')");
 		assertThat(sql).contains("FOR UPDATE SKIP LOCKED");
+		assertThat(sql).contains("claim_token = :claimToken");
 		assertThat(sql).contains("next_retry_at = NULL");
+		assertThat(sql).contains("outbox.claim_token::text AS claim_token");
 		assertThat(params).containsEntry("batchSize", 20);
 		assertThat(params).containsEntry("processingTimeoutMs", 60000L);
+		assertThat(params).containsKey("claimToken");
+		assertThat(params.get("claimToken")).isInstanceOf(UUID.class);
 	}
 }

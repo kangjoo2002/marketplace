@@ -40,15 +40,17 @@ class ProductSearchQueryExpressionsTest {
 	}
 
 	@Test
-	void whereDoesNotAddOptionExistsWithoutOptionFilters() {
+	void whereAddsOptionExistsWithoutOptionFilters() {
 		ProductSearchCondition condition = new ProductSearchCondition();
 		condition.setCategoryId(75L);
 
 		Predicate predicate = ProductSearchQueryExpressions.where(condition, product);
 
 		assertThat(predicate.toString()).contains("product.categoryId = 75");
-		assertThat(predicate.toString()).doesNotContain("exists");
-		assertThat(predicate.toString()).doesNotContain("productOption");
+		assertThat(predicate.toString()).contains("exists");
+		assertThat(predicate.toString()).doesNotContain("productOption.color");
+		assertThat(predicate.toString()).doesNotContain("productOption.size");
+		assertThat(predicate.toString()).doesNotContain("productOption.stockStatus");
 	}
 
 	@Test
