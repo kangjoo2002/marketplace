@@ -1,4 +1,4 @@
-package com.portfolio.readpath_lab.product.repository;
+package com.portfolio.marketplace.productsearch.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -24,3 +24,6 @@ public class ProductSearchBaselineProperties {
 		this.productOptionsTable = productOptionsTable;
 	}
 }
+
+
+

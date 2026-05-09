@@ -1,4 +1,4 @@
-package com.portfolio.readpath_lab.product.domain;
+package com.portfolio.marketplace.product.domain;
 
 public enum ProductColor {
 	BLACK,
@@ -10,3 +10,5 @@ public enum ProductColor {
 	NAVY,
 	BEIGE
 }
+
+

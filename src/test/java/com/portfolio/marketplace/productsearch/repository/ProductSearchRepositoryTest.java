@@ -1,11 +1,12 @@
-package com.portfolio.readpath_lab.product.repository;
+package com.portfolio.marketplace.productsearch.repository;
 
-import com.portfolio.readpath_lab.product.api.ProductSearchItemResponse;
-import com.portfolio.readpath_lab.product.api.ProductSearchRequest;
-import com.portfolio.readpath_lab.product.domain.ProductColor;
-import com.portfolio.readpath_lab.product.domain.ProductSize;
-import com.portfolio.readpath_lab.product.domain.ProductStatus;
-import com.portfolio.readpath_lab.product.domain.StockStatus;
+import com.portfolio.marketplace.productsearch.domain.ProductSearchItem;
+import com.portfolio.marketplace.productsearch.domain.ProductSearchCondition;
+import com.portfolio.marketplace.product.domain.ProductColor;
+import com.portfolio.marketplace.product.domain.ProductSize;
+import com.portfolio.marketplace.product.domain.ProductStatus;
+import com.portfolio.marketplace.product.domain.StockStatus;
+import com.portfolio.marketplace.productsearch.config.ProductSearchBaselineProperties;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -29,13 +30,13 @@ class ProductSearchRepositoryTest {
 		when(jdbcTemplate.query(
 				sqlCaptor.capture(),
 				anyMap(),
-				ArgumentMatchers.<RowMapper<ProductSearchItemResponse>>any()
-		)).thenReturn(List.<ProductSearchItemResponse>of());
+				ArgumentMatchers.<RowMapper<ProductSearchItem>>any()
+		)).thenReturn(List.<ProductSearchItem>of());
 
 		ProductSearchBaselineProperties properties = new ProductSearchBaselineProperties();
 		ProductSearchRepository repository = new ProductSearchRepository(jdbcTemplate, properties);
 
-		ProductSearchRequest request = new ProductSearchRequest();
+		ProductSearchCondition request = new ProductSearchCondition();
 		request.setCategoryId(35L);
 		request.setBrandId(543L);
 		request.setStatus(ProductStatus.ACTIVE);
@@ -66,13 +67,13 @@ class ProductSearchRepositoryTest {
 		when(jdbcTemplate.query(
 				sqlCaptor.capture(),
 				anyMap(),
-				ArgumentMatchers.<RowMapper<ProductSearchItemResponse>>any()
-		)).thenReturn(List.<ProductSearchItemResponse>of());
+				ArgumentMatchers.<RowMapper<ProductSearchItem>>any()
+		)).thenReturn(List.<ProductSearchItem>of());
 
 		ProductSearchBaselineProperties properties = new ProductSearchBaselineProperties();
 		ProductSearchRepository repository = new ProductSearchRepository(jdbcTemplate, properties);
 
-		ProductSearchRequest request = new ProductSearchRequest();
+		ProductSearchCondition request = new ProductSearchCondition();
 		request.setCategoryId(75L);
 		request.setBrandId(943L);
 		request.setStatus(ProductStatus.ACTIVE);
@@ -109,13 +110,13 @@ class ProductSearchRepositoryTest {
 		when(jdbcTemplate.query(
 				sqlCaptor.capture(),
 				paramsCaptor.capture(),
-				ArgumentMatchers.<RowMapper<ProductSearchItemResponse>>any()
-		)).thenReturn(List.<ProductSearchItemResponse>of());
+				ArgumentMatchers.<RowMapper<ProductSearchItem>>any()
+		)).thenReturn(List.<ProductSearchItem>of());
 
 		ProductSearchBaselineProperties properties = new ProductSearchBaselineProperties();
 		ProductSearchRepository repository = new ProductSearchRepository(jdbcTemplate, properties);
 
-		ProductSearchRequest request = new ProductSearchRequest();
+		ProductSearchCondition request = new ProductSearchCondition();
 		request.setCategoryId(75L);
 		request.setBrandId(943L);
 		request.setStatus(ProductStatus.ACTIVE);
@@ -160,13 +161,13 @@ class ProductSearchRepositoryTest {
 		when(jdbcTemplate.query(
 				sqlCaptor.capture(),
 				paramsCaptor.capture(),
-				ArgumentMatchers.<RowMapper<ProductSearchItemResponse>>any()
-		)).thenReturn(List.<ProductSearchItemResponse>of());
+				ArgumentMatchers.<RowMapper<ProductSearchItem>>any()
+		)).thenReturn(List.<ProductSearchItem>of());
 
 		ProductSearchBaselineProperties properties = new ProductSearchBaselineProperties();
 		ProductSearchRepository repository = new ProductSearchRepository(jdbcTemplate, properties);
 
-		ProductSearchRequest request = new ProductSearchRequest();
+		ProductSearchCondition request = new ProductSearchCondition();
 		request.setStatus(ProductStatus.ACTIVE);
 		request.setColor(ProductColor.BLACK);
 		request.setSize(ProductSize.M);
@@ -200,13 +201,13 @@ class ProductSearchRepositoryTest {
 		when(jdbcTemplate.query(
 				sqlCaptor.capture(),
 				paramsCaptor.capture(),
-				ArgumentMatchers.<RowMapper<ProductSearchItemResponse>>any()
-		)).thenReturn(List.<ProductSearchItemResponse>of());
+				ArgumentMatchers.<RowMapper<ProductSearchItem>>any()
+		)).thenReturn(List.<ProductSearchItem>of());
 
 		ProductSearchBaselineProperties properties = new ProductSearchBaselineProperties();
 		ProductSearchRepository repository = new ProductSearchRepository(jdbcTemplate, properties);
 
-		ProductSearchRequest request = new ProductSearchRequest();
+		ProductSearchCondition request = new ProductSearchCondition();
 		request.setColor(ProductColor.BLACK);
 		request.setSize(ProductSize.M);
 		request.setSort("createdAtDesc");
@@ -239,13 +240,13 @@ class ProductSearchRepositoryTest {
 		when(jdbcTemplate.query(
 				sqlCaptor.capture(),
 				paramsCaptor.capture(),
-				ArgumentMatchers.<RowMapper<ProductSearchItemResponse>>any()
-		)).thenReturn(List.<ProductSearchItemResponse>of());
+				ArgumentMatchers.<RowMapper<ProductSearchItem>>any()
+		)).thenReturn(List.<ProductSearchItem>of());
 
 		ProductSearchBaselineProperties properties = new ProductSearchBaselineProperties();
 		ProductSearchRepository repository = new ProductSearchRepository(jdbcTemplate, properties);
 
-		ProductSearchRequest request = new ProductSearchRequest();
+		ProductSearchCondition request = new ProductSearchCondition();
 		request.setCategoryId(75L);
 		request.setBrandId(943L);
 		request.setStatus(ProductStatus.ACTIVE);
@@ -280,3 +281,7 @@ class ProductSearchRepositoryTest {
 		assertThat(params).containsEntry("offset", 100);
 	}
 }
+
+
+
+

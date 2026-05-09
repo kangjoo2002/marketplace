@@ -1,7 +1,8 @@
-package com.portfolio.readpath_lab.product.repository;
+package com.portfolio.marketplace.productsearch.repository;
 
-import com.portfolio.readpath_lab.product.api.ProductSearchItemResponse;
-import com.portfolio.readpath_lab.product.api.ProductSearchRequest;
+import com.portfolio.marketplace.productsearch.config.ProductSearchBaselineProperties;
+import com.portfolio.marketplace.productsearch.domain.ProductSearchCondition;
+import com.portfolio.marketplace.productsearch.domain.ProductSearchItem;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -32,7 +33,7 @@ public class ProductSearchRepository {
 		this.productOptionsTable = requireSafeIdentifier(properties.getProductOptionsTable(), "productOptionsTable");
 	}
 
-	public List<ProductSearchItemResponse> search(ProductSearchRequest request) {
+	public List<ProductSearchItem> search(ProductSearchCondition request) {
 		Map<String, Object> params = new HashMap<>();
 		StringBuilder sql = new StringBuilder()
 				.append("SELECT DISTINCT ")
@@ -72,7 +73,7 @@ public class ProductSearchRepository {
 		return jdbcTemplate.query(sql.toString(), params, rowMapper());
 	}
 
-	public List<ProductSearchItemResponse> searchDenormalizedDb(ProductSearchRequest request) {
+	public List<ProductSearchItem> searchDenormalizedDb(ProductSearchCondition request) {
 		Map<String, Object> params = new HashMap<>();
 		StringBuilder sql = new StringBuilder()
 				.append("SELECT ")
@@ -104,7 +105,7 @@ public class ProductSearchRepository {
 		return jdbcTemplate.query(sql.toString(), params, rowMapper());
 	}
 
-	public List<ProductSearchItemResponse> searchDbTuned(ProductSearchRequest request) {
+	public List<ProductSearchItem> searchDbTuned(ProductSearchCondition request) {
 		Map<String, Object> params = new HashMap<>();
 		StringBuilder sql = new StringBuilder()
 				.append("SELECT ")
@@ -150,7 +151,7 @@ public class ProductSearchRepository {
 		params.put(parameter, value);
 	}
 
-	private void appendOptionExistsFilter(StringBuilder sql, Map<String, Object> params, ProductSearchRequest request) {
+	private void appendOptionExistsFilter(StringBuilder sql, Map<String, Object> params, ProductSearchCondition request) {
 		sql.append("AND EXISTS (")
 				.append("SELECT 1 FROM ").append(productOptionsTable).append(" po ")
 				.append("WHERE po.product_id = p.id ");
@@ -171,7 +172,7 @@ public class ProductSearchRepository {
 	private static void appendOptionSignatureFilter(
 			StringBuilder sql,
 			Map<String, Object> params,
-			ProductSearchRequest request
+			ProductSearchCondition request
 	) {
 		String color = request.getColor() == null ? null : request.getColor().name();
 		String size = request.getSize() == null ? null : request.getSize().name();
@@ -239,8 +240,8 @@ public class ProductSearchRepository {
 		return value;
 	}
 
-	private static RowMapper<ProductSearchItemResponse> rowMapper() {
-		return (rs, rowNum) -> new ProductSearchItemResponse(
+	private static RowMapper<ProductSearchItem> rowMapper() {
+		return (rs, rowNum) -> new ProductSearchItem(
 				rs.getLong("id"),
 				rs.getLong("seller_id"),
 				rs.getLong("category_id"),
@@ -259,3 +260,7 @@ public class ProductSearchRepository {
 		return timestamp == null ? null : timestamp.toLocalDateTime();
 	}
 }
+
+
+
+

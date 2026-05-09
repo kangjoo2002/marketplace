@@ -1,4 +1,4 @@
-package com.portfolio.readpath_lab.product.domain;
+package com.portfolio.marketplace.product.domain;
 
 public enum ProductSize {
 	XS,
@@ -8,3 +8,5 @@ public enum ProductSize {
 	XL,
 	FREE
 }
+
+
