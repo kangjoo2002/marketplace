@@ -1,5 +1,7 @@
-package com.portfolio.readpath_lab.product.application;
+package com.portfolio.marketplace.productsearch.config;
 
+import com.portfolio.marketplace.global.error.BusinessException;
+import com.portfolio.marketplace.productsearch.error.ProductSearchErrorCode;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "readpath.product-search")
@@ -35,7 +37,7 @@ public class ProductSearchReadPathProperties {
 		if ("opensearch".equalsIgnoreCase(readPath)) {
 			return "opensearch";
 		}
-		throw new IllegalArgumentException("Unsupported product search read path: " + readPath);
+		throw new BusinessException(ProductSearchErrorCode.UNSUPPORTED_READ_PATH);
 	}
 
 	public static class OpenSearch {
@@ -118,3 +120,6 @@ public class ProductSearchReadPathProperties {
 		}
 	}
 }
+
+
+
