@@ -11,10 +11,11 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
 @Component
-public class RestClientOpenSearchHttpClient implements OpenSearchHttpClient {
+public class RestClientOpenSearchHttpClient implements OpenSearchSearchClient, OpenSearchDocumentClient {
 
 	private final RestClient restClient;
 	private final String searchPath;
+	private final String documentPath;
 
 	public RestClientOpenSearchHttpClient(ProductSearchReadPathProperties properties) {
 		ProductSearchReadPathProperties.OpenSearch openSearch = properties.getOpenSearch();
@@ -27,6 +28,7 @@ public class RestClientOpenSearchHttpClient implements OpenSearchHttpClient {
 				.requestFactory(requestFactory)
 				.build();
 		this.searchPath = "/" + trimSlashes(openSearch.getIndexAlias()) + "/_search";
+		this.documentPath = "/" + trimSlashes(openSearch.getWriteAlias()) + "/_doc/{documentId}";
 	}
 
 	@Override
@@ -61,6 +63,60 @@ public class RestClientOpenSearchHttpClient implements OpenSearchHttpClient {
 					: OpenSearchFailureReason.CONNECTION_FAILURE;
 			throw new OpenSearchProductSearchException(reason, "OpenSearch request failed", exception);
 		}
+	}
+
+	@Override
+	public void indexDocument(String documentId, Map<String, Object> document) {
+		try {
+			restClient.put()
+					.uri(documentPath, documentId)
+					.body(document)
+					.retrieve()
+					.toBodilessEntity();
+		} catch (RestClientResponseException exception) {
+			throw toOpenSearchException(exception);
+		} catch (ResourceAccessException exception) {
+			throw toOpenSearchException(exception);
+		}
+	}
+
+	@Override
+	public void deleteDocument(String documentId) {
+		try {
+			restClient.delete()
+					.uri(documentPath, documentId)
+					.retrieve()
+					.toBodilessEntity();
+		} catch (RestClientResponseException exception) {
+			if (exception.getStatusCode().value() == 404) {
+				return;
+			}
+			throw toOpenSearchException(exception);
+		} catch (ResourceAccessException exception) {
+			throw toOpenSearchException(exception);
+		}
+	}
+
+	private static OpenSearchProductSearchException toOpenSearchException(RestClientResponseException exception) {
+		if (exception.getStatusCode().is5xxServerError()) {
+			return new OpenSearchProductSearchException(
+					OpenSearchFailureReason.HTTP_5XX,
+					"OpenSearch returned HTTP " + exception.getStatusCode().value(),
+					exception
+			);
+		}
+		return new OpenSearchProductSearchException(
+				OpenSearchFailureReason.MALFORMED_RESPONSE,
+				"OpenSearch returned HTTP " + exception.getStatusCode().value(),
+				exception
+		);
+	}
+
+	private static OpenSearchProductSearchException toOpenSearchException(ResourceAccessException exception) {
+		OpenSearchFailureReason reason = containsTimeout(exception)
+				? OpenSearchFailureReason.TIMEOUT
+				: OpenSearchFailureReason.CONNECTION_FAILURE;
+		return new OpenSearchProductSearchException(reason, "OpenSearch request failed", exception);
 	}
 
 	private static boolean containsTimeout(Throwable throwable) {
