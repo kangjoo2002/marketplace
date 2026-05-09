@@ -22,6 +22,7 @@ public class ProductSearchIndexingProperties {
 		private long fixedDelayMs = 5000;
 		private int maxRetryCount = 3;
 		private long retryDelayMs = 10000;
+		private long processingTimeoutMs = 60000;
 
 		public boolean isEnabled() {
 			return enabled;
@@ -61,6 +62,14 @@ public class ProductSearchIndexingProperties {
 
 		public void setRetryDelayMs(long retryDelayMs) {
 			this.retryDelayMs = retryDelayMs;
+		}
+
+		public long getProcessingTimeoutMs() {
+			return processingTimeoutMs;
+		}
+
+		public void setProcessingTimeoutMs(long processingTimeoutMs) {
+			this.processingTimeoutMs = processingTimeoutMs;
 		}
 	}
 }

@@ -16,20 +16,29 @@ public class SearchOutboxRepository {
 		this.jdbcTemplate = jdbcTemplate;
 	}
 
-	public List<SearchOutboxEvent> claimPendingProductEvents(int batchSize) {
+	public List<SearchOutboxEvent> claimPendingProductEvents(int batchSize, long processingTimeoutMs) {
 		String sql = """
 				WITH claimed AS (
 				    SELECT id
 				    FROM search_outbox
 				    WHERE aggregate_type = 'PRODUCT'
-				      AND status = 'PENDING'
-				      AND (next_retry_at IS NULL OR next_retry_at <= now())
+				      AND (
+				          (
+				              status = 'PENDING'
+				              AND (next_retry_at IS NULL OR next_retry_at <= now())
+				          )
+				          OR (
+				              status = 'PROCESSING'
+				              AND updated_at <= now() - (:processingTimeoutMs * INTERVAL '1 millisecond')
+				          )
+				      )
 				    ORDER BY id
 				    FOR UPDATE SKIP LOCKED
 				    LIMIT :batchSize
 				)
 				UPDATE search_outbox outbox
 				SET status = 'PROCESSING',
+				    next_retry_at = NULL,
 				    updated_at = now()
 				FROM claimed
 				WHERE outbox.id = claimed.id
@@ -43,7 +52,10 @@ public class SearchOutboxRepository {
 				""";
 		return jdbcTemplate.query(
 				sql,
-				Map.of("batchSize", batchSize),
+				Map.of(
+						"batchSize", batchSize,
+						"processingTimeoutMs", processingTimeoutMs
+				),
 				(rs, rowNum) -> new SearchOutboxEvent(
 						rs.getLong("id"),
 						rs.getLong("aggregate_id"),
