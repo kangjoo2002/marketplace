@@ -1,18 +1,17 @@
 package com.portfolio.marketplace.productsearch.repository;
 
 import com.portfolio.marketplace.productsearch.domain.SearchOutboxEvent;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class SearchOutboxRepository {
+public class SearchOutboxClaimDao {
 
 	private final NamedParameterJdbcTemplate jdbcTemplate;
 
-	public SearchOutboxRepository(NamedParameterJdbcTemplate jdbcTemplate) {
+	public SearchOutboxClaimDao(NamedParameterJdbcTemplate jdbcTemplate) {
 		this.jdbcTemplate = jdbcTemplate;
 	}
 
@@ -65,58 +64,5 @@ public class SearchOutboxRepository {
 						rs.getInt("retry_count")
 				)
 		);
-	}
-
-	public void markDone(long eventId) {
-		String sql = """
-				UPDATE search_outbox
-				SET status = 'DONE',
-				    last_error = NULL,
-				    processed_at = now(),
-				    updated_at = now()
-				WHERE id = :eventId
-				""";
-		jdbcTemplate.update(sql, Map.of("eventId", eventId));
-	}
-
-	public void markPendingRetry(long eventId, String lastError, LocalDateTime nextRetryAt) {
-		String sql = """
-				UPDATE search_outbox
-				SET status = 'PENDING',
-				    retry_count = retry_count + 1,
-				    last_error = :lastError,
-				    next_retry_at = :nextRetryAt,
-				    updated_at = now()
-				WHERE id = :eventId
-				""";
-		jdbcTemplate.update(sql, Map.of(
-				"eventId", eventId,
-				"lastError", truncate(lastError),
-				"nextRetryAt", nextRetryAt
-		));
-	}
-
-	public void markFailed(long eventId, String lastError) {
-		String sql = """
-				UPDATE search_outbox
-				SET status = 'FAILED',
-				    retry_count = retry_count + 1,
-				    last_error = :lastError,
-				    next_retry_at = NULL,
-				    processed_at = now(),
-				    updated_at = now()
-				WHERE id = :eventId
-				""";
-		jdbcTemplate.update(sql, Map.of(
-				"eventId", eventId,
-				"lastError", truncate(lastError)
-		));
-	}
-
-	private static String truncate(String value) {
-		if (value == null || value.length() <= 1000) {
-			return value;
-		}
-		return value.substring(0, 1000);
 	}
 }

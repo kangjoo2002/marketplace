@@ -4,7 +4,7 @@ import com.portfolio.marketplace.productsearch.config.ProductSearchIndexingPrope
 import com.portfolio.marketplace.productsearch.domain.ProductSearchDocument;
 import com.portfolio.marketplace.productsearch.domain.SearchOutboxEvent;
 import com.portfolio.marketplace.productsearch.repository.ProductSearchDocumentRepository;
-import com.portfolio.marketplace.productsearch.repository.SearchOutboxRepository;
+import com.portfolio.marketplace.productsearch.repository.SearchOutboxStore;
 import com.portfolio.marketplace.productsearch.service.port.ProductSearchIndexWriter;
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -26,13 +26,13 @@ import static org.mockito.Mockito.when;
 
 class ProductSearchOutboxRelayServiceTest {
 
-	private final SearchOutboxRepository outboxRepository = mock(SearchOutboxRepository.class);
+	private final SearchOutboxStore outboxStore = mock(SearchOutboxStore.class);
 	private final ProductSearchDocumentRepository documentRepository = mock(ProductSearchDocumentRepository.class);
 	private final ProductSearchIndexWriter indexWriter = mock(ProductSearchIndexWriter.class);
 	private final ProductSearchIndexingProperties properties = new ProductSearchIndexingProperties();
 	private final Clock clock = Clock.fixed(Instant.parse("2026-05-02T10:02:00Z"), ZoneOffset.UTC);
 	private final ProductSearchOutboxRelayService relayService = new ProductSearchOutboxRelayService(
-			outboxRepository,
+			outboxStore,
 			documentRepository,
 			indexWriter,
 			properties,
@@ -42,45 +42,45 @@ class ProductSearchOutboxRelayServiceTest {
 	@Test
 	void upsertsSourceDocumentAndMarksDone() {
 		SearchOutboxEvent event = new SearchOutboxEvent(1L, 10L, "PRODUCT_UPDATED", 1, "{}", 0);
-		when(outboxRepository.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
+		when(outboxStore.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
 		when(documentRepository.findByProductId(10L)).thenReturn(Optional.of(activeDocument()));
 
 		relayService.processBatch();
 
 		verify(indexWriter).upsert(activeDocument().refreshedAt(LocalDateTime.parse("2026-05-02T10:02:00")));
-		verify(outboxRepository).markDone(1L);
-		verify(outboxRepository, never()).markFailed(anyLong(), any());
+		verify(outboxStore).markDone(1L);
+		verify(outboxStore, never()).markFailed(anyLong(), any());
 	}
 
 	@Test
 	void deletesDocumentForProductDeletedEvent() {
 		SearchOutboxEvent event = new SearchOutboxEvent(2L, 10L, "PRODUCT_DELETED", 1, "{}", 0);
-		when(outboxRepository.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
+		when(outboxStore.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
 
 		relayService.processBatch();
 
 		verify(indexWriter).deleteByProductId(10L);
 		verify(documentRepository, never()).findByProductId(10L);
-		verify(outboxRepository).markDone(2L);
+		verify(outboxStore).markDone(2L);
 	}
 
 	@Test
 	void deletesDocumentWhenSourceStatusIsDeleted() {
 		SearchOutboxEvent event = new SearchOutboxEvent(3L, 10L, "PRODUCT_STATUS_CHANGED", 1, "{}", 0);
-		when(outboxRepository.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
+		when(outboxStore.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
 		when(documentRepository.findByProductId(10L)).thenReturn(Optional.of(deletedDocument()));
 
 		relayService.processBatch();
 
 		verify(indexWriter).deleteByProductId(10L);
 		verify(indexWriter, never()).upsert(any());
-		verify(outboxRepository).markDone(3L);
+		verify(outboxStore).markDone(3L);
 	}
 
 	@Test
 	void schedulesRetryWhenIndexWriteFailsBeforeMaxRetry() {
 		SearchOutboxEvent event = new SearchOutboxEvent(4L, 10L, "PRODUCT_UPDATED", 1, "{}", 0);
-		when(outboxRepository.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
+		when(outboxStore.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
 		when(documentRepository.findByProductId(10L)).thenReturn(Optional.of(activeDocument()));
 		org.mockito.Mockito.doThrow(new IllegalStateException("OpenSearch down"))
 				.when(indexWriter)
@@ -88,19 +88,19 @@ class ProductSearchOutboxRelayServiceTest {
 
 		relayService.processBatch();
 
-		verify(outboxRepository).markPendingRetry(
+		verify(outboxStore).markPendingRetry(
 				eq(4L),
 				contains("OpenSearch down"),
 				eq(LocalDateTime.parse("2026-05-02T10:02:10"))
 		);
-		verify(outboxRepository, never()).markDone(4L);
-		verify(outboxRepository, never()).markFailed(anyLong(), any());
+		verify(outboxStore, never()).markDone(4L);
+		verify(outboxStore, never()).markFailed(anyLong(), any());
 	}
 
 	@Test
 	void marksFailedWhenIndexWriteFailsAtMaxRetry() {
 		SearchOutboxEvent event = new SearchOutboxEvent(5L, 10L, "PRODUCT_UPDATED", 1, "{}", 2);
-		when(outboxRepository.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
+		when(outboxStore.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
 		when(documentRepository.findByProductId(10L)).thenReturn(Optional.of(activeDocument()));
 		org.mockito.Mockito.doThrow(new IllegalStateException("OpenSearch down"))
 				.when(indexWriter)
@@ -108,9 +108,9 @@ class ProductSearchOutboxRelayServiceTest {
 
 		relayService.processBatch();
 
-		verify(outboxRepository).markFailed(eq(5L), contains("OpenSearch down"));
-		verify(outboxRepository, never()).markPendingRetry(anyLong(), any(), any());
-		verify(outboxRepository, never()).markDone(5L);
+		verify(outboxStore).markFailed(eq(5L), contains("OpenSearch down"));
+		verify(outboxStore, never()).markPendingRetry(anyLong(), any(), any());
+		verify(outboxStore, never()).markDone(5L);
 	}
 
 	private static ProductSearchDocument activeDocument() {

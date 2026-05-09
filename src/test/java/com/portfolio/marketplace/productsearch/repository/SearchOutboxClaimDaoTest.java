@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class SearchOutboxRepositoryTest {
+class SearchOutboxClaimDaoTest {
 
 	@Test
 	@SuppressWarnings("unchecked")
@@ -26,9 +26,9 @@ class SearchOutboxRepositoryTest {
 				paramsCaptor.capture(),
 				ArgumentMatchers.<RowMapper<SearchOutboxEvent>>any()
 		)).thenReturn(List.of());
-		SearchOutboxRepository repository = new SearchOutboxRepository(jdbcTemplate);
+		SearchOutboxClaimDao claimDao = new SearchOutboxClaimDao(jdbcTemplate);
 
-		repository.claimPendingProductEvents(20, 60000L);
+		claimDao.claimPendingProductEvents(20, 60000L);
 
 		String sql = sqlCaptor.getValue();
 		Map<String, Object> params = paramsCaptor.getValue();

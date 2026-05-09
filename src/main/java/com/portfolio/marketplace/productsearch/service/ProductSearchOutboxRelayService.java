@@ -4,7 +4,7 @@ import com.portfolio.marketplace.productsearch.config.ProductSearchIndexingPrope
 import com.portfolio.marketplace.productsearch.domain.ProductSearchDocument;
 import com.portfolio.marketplace.productsearch.domain.SearchOutboxEvent;
 import com.portfolio.marketplace.productsearch.repository.ProductSearchDocumentRepository;
-import com.portfolio.marketplace.productsearch.repository.SearchOutboxRepository;
+import com.portfolio.marketplace.productsearch.repository.SearchOutboxStore;
 import com.portfolio.marketplace.productsearch.service.port.ProductSearchIndexWriter;
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -18,20 +18,20 @@ public class ProductSearchOutboxRelayService {
 
 	private static final Logger log = LoggerFactory.getLogger(ProductSearchOutboxRelayService.class);
 
-	private final SearchOutboxRepository outboxRepository;
+	private final SearchOutboxStore outboxStore;
 	private final ProductSearchDocumentRepository documentRepository;
 	private final ProductSearchIndexWriter indexWriter;
 	private final ProductSearchIndexingProperties indexingProperties;
 	private final Clock clock;
 
 	public ProductSearchOutboxRelayService(
-			SearchOutboxRepository outboxRepository,
+			SearchOutboxStore outboxStore,
 			ProductSearchDocumentRepository documentRepository,
 			ProductSearchIndexWriter indexWriter,
 			ProductSearchIndexingProperties indexingProperties,
 			Clock clock
 	) {
-		this.outboxRepository = outboxRepository;
+		this.outboxStore = outboxStore;
 		this.documentRepository = documentRepository;
 		this.indexWriter = indexWriter;
 		this.indexingProperties = indexingProperties;
@@ -40,7 +40,7 @@ public class ProductSearchOutboxRelayService {
 
 	public int processBatch() {
 		ProductSearchIndexingProperties.Relay relay = indexingProperties.getRelay();
-		List<SearchOutboxEvent> events = outboxRepository.claimPendingProductEvents(
+		List<SearchOutboxEvent> events = outboxStore.claimPendingProductEvents(
 				relay.getBatchSize(),
 				relay.getProcessingTimeoutMs()
 		);
@@ -54,7 +54,7 @@ public class ProductSearchOutboxRelayService {
 		try {
 			if (event.isProductDeleteEvent()) {
 				indexWriter.deleteByProductId(event.aggregateId());
-				outboxRepository.markDone(event.id());
+				outboxStore.markDone(event.id());
 				return;
 			}
 
@@ -64,7 +64,7 @@ public class ProductSearchOutboxRelayService {
 							this::upsertOrDeleteDeletedDocument,
 							() -> indexWriter.deleteByProductId(event.aggregateId())
 					);
-			outboxRepository.markDone(event.id());
+			outboxStore.markDone(event.id());
 		} catch (RuntimeException exception) {
 			String errorMessage = exception.getMessage() == null
 					? exception.getClass().getSimpleName()
@@ -82,12 +82,12 @@ public class ProductSearchOutboxRelayService {
 
 	private void markFailure(SearchOutboxEvent event, String errorMessage) {
 		if (event.retryCount() + 1 >= indexingProperties.getRelay().getMaxRetryCount()) {
-			outboxRepository.markFailed(event.id(), errorMessage);
+			outboxStore.markFailed(event.id(), errorMessage);
 			return;
 		}
 		LocalDateTime nextRetryAt = LocalDateTime.now(clock)
 				.plusNanos(indexingProperties.getRelay().getRetryDelayMs() * 1_000_000);
-		outboxRepository.markPendingRetry(event.id(), errorMessage, nextRetryAt);
+		outboxStore.markPendingRetry(event.id(), errorMessage, nextRetryAt);
 	}
 
 	private ProductSearchDocument refresh(ProductSearchDocument document) {
