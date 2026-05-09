@@ -4,7 +4,7 @@ import com.portfolio.marketplace.productsearch.config.ProductSearchReadPathPrope
 import com.portfolio.marketplace.productsearch.domain.ProductSearchCondition;
 import com.portfolio.marketplace.productsearch.domain.ProductSearchItem;
 import com.portfolio.marketplace.productsearch.infrastructure.opensearch.OpenSearchProductSearchException;
-import com.portfolio.marketplace.productsearch.repository.ProductSearchRepository;
+import com.portfolio.marketplace.productsearch.repository.ProductSearchQueryRepository;
 import com.portfolio.marketplace.productsearch.service.port.ProductSearchIndexReader;
 import java.time.Clock;
 import java.time.Instant;
@@ -26,7 +26,7 @@ class ProductSearchReadPathRouterTest {
 
 	@Test
 	void dbReadPathIsDefault() {
-		ProductSearchRepository repository = mock(ProductSearchRepository.class);
+		ProductSearchQueryRepository repository = mock(ProductSearchQueryRepository.class);
 		ProductSearchIndexReader indexReader = mock(ProductSearchIndexReader.class);
 		ProductSearchReadPathProperties properties = new ProductSearchReadPathProperties();
 		ProductSearchFallbackMetrics metrics = new ProductSearchFallbackMetrics();
@@ -52,7 +52,7 @@ class ProductSearchReadPathRouterTest {
 
 	@Test
 	void opensearchReadPathUsesIndexReaderWhenFlagEnabled() {
-		ProductSearchRepository repository = mock(ProductSearchRepository.class);
+		ProductSearchQueryRepository repository = mock(ProductSearchQueryRepository.class);
 		ProductSearchIndexReader indexReader = mock(ProductSearchIndexReader.class);
 		ProductSearchReadPathProperties properties = new ProductSearchReadPathProperties();
 		properties.setReadPath("opensearch");
@@ -80,7 +80,7 @@ class ProductSearchReadPathRouterTest {
 
 	@Test
 	void opensearchFailureFallsBackToDbAndRecordsMetrics() {
-		ProductSearchRepository repository = mock(ProductSearchRepository.class);
+		ProductSearchQueryRepository repository = mock(ProductSearchQueryRepository.class);
 		ProductSearchIndexReader indexReader = mock(ProductSearchIndexReader.class);
 		ProductSearchReadPathProperties properties = new ProductSearchReadPathProperties();
 		properties.setReadPath("opensearch");
@@ -112,7 +112,7 @@ class ProductSearchReadPathRouterTest {
 
 	@Test
 	void repeatedOpenSearchFailuresOpenCircuitBreakerAndShortCircuitNextRequest() {
-		ProductSearchRepository repository = mock(ProductSearchRepository.class);
+		ProductSearchQueryRepository repository = mock(ProductSearchQueryRepository.class);
 		ProductSearchIndexReader indexReader = mock(ProductSearchIndexReader.class);
 		ProductSearchReadPathProperties properties = new ProductSearchReadPathProperties();
 		properties.setReadPath("opensearch");
@@ -149,7 +149,7 @@ class ProductSearchReadPathRouterTest {
 
 	@Test
 	void halfOpenSuccessClosesCircuitBreaker() {
-		ProductSearchRepository repository = mock(ProductSearchRepository.class);
+		ProductSearchQueryRepository repository = mock(ProductSearchQueryRepository.class);
 		ProductSearchIndexReader indexReader = mock(ProductSearchIndexReader.class);
 		ProductSearchReadPathProperties properties = new ProductSearchReadPathProperties();
 		properties.setReadPath("opensearch");
@@ -188,7 +188,7 @@ class ProductSearchReadPathRouterTest {
 
 	@Test
 	void halfOpenFailureReopensCircuitBreaker() {
-		ProductSearchRepository repository = mock(ProductSearchRepository.class);
+		ProductSearchQueryRepository repository = mock(ProductSearchQueryRepository.class);
 		ProductSearchIndexReader indexReader = mock(ProductSearchIndexReader.class);
 		ProductSearchReadPathProperties properties = new ProductSearchReadPathProperties();
 		properties.setReadPath("opensearch");
@@ -227,7 +227,7 @@ class ProductSearchReadPathRouterTest {
 
 	@Test
 	void indexReaderClientErrorDoesNotFallbackOrOpenCircuitBreaker() {
-		ProductSearchRepository repository = mock(ProductSearchRepository.class);
+		ProductSearchQueryRepository repository = mock(ProductSearchQueryRepository.class);
 		ProductSearchIndexReader indexReader = mock(ProductSearchIndexReader.class);
 		ProductSearchReadPathProperties properties = new ProductSearchReadPathProperties();
 		properties.setReadPath("opensearch");
