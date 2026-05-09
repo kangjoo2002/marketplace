@@ -16,15 +16,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class OpenSearchProductSearchReader implements ProductSearchIndexReader {
 
-	private final OpenSearchHttpClient openSearchHttpClient;
+	private final OpenSearchSearchClient openSearchSearchClient;
 
-	public OpenSearchProductSearchReader(OpenSearchHttpClient openSearchHttpClient) {
-		this.openSearchHttpClient = openSearchHttpClient;
+	public OpenSearchProductSearchReader(OpenSearchSearchClient openSearchSearchClient) {
+		this.openSearchSearchClient = openSearchSearchClient;
 	}
 
 	@Override
 	public List<ProductSearchItem> search(ProductSearchCondition condition) {
-		Map<String, Object> response = openSearchHttpClient.search(buildQuery(condition));
+		Map<String, Object> response = openSearchSearchClient.search(buildQuery(condition));
 		return parseResponse(response);
 	}
 

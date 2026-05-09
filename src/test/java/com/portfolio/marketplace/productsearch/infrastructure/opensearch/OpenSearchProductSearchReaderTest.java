@@ -16,7 +16,7 @@ class OpenSearchProductSearchReaderTest {
 
 	@Test
 	void buildsNestedOptionQueryForSameOptionRowSemantics() {
-		CapturingOpenSearchHttpClient httpClient = new CapturingOpenSearchHttpClient(Map.of(
+		CapturingOpenSearchSearchClient httpClient = new CapturingOpenSearchSearchClient(Map.of(
 				"hits", Map.of("hits", List.of())
 		));
 		OpenSearchProductSearchReader reader = new OpenSearchProductSearchReader(httpClient);
@@ -48,7 +48,7 @@ class OpenSearchProductSearchReaderTest {
 
 	@Test
 	void mapsOpenSearchSourceToProductSearchItem() {
-		CapturingOpenSearchHttpClient httpClient = new CapturingOpenSearchHttpClient(Map.of(
+		CapturingOpenSearchSearchClient httpClient = new CapturingOpenSearchSearchClient(Map.of(
 				"hits", Map.of(
 						"hits", List.of(Map.of(
 								"_source", Map.of(
@@ -79,12 +79,12 @@ class OpenSearchProductSearchReaderTest {
 		assertThat(item.reviewCount()).isEqualTo(12);
 	}
 
-	private static class CapturingOpenSearchHttpClient implements OpenSearchHttpClient {
+	private static class CapturingOpenSearchSearchClient implements OpenSearchSearchClient {
 
 		private final Map<String, Object> response;
 		private Map<String, Object> query;
 
-		private CapturingOpenSearchHttpClient(Map<String, Object> response) {
+		private CapturingOpenSearchSearchClient(Map<String, Object> response) {
 			this.response = response;
 		}
 
@@ -93,5 +93,6 @@ class OpenSearchProductSearchReaderTest {
 			this.query = query;
 			return response;
 		}
+
 	}
 }

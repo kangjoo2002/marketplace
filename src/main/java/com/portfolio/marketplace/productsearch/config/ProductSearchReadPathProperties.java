@@ -44,6 +44,7 @@ public class ProductSearchReadPathProperties {
 
 		private String baseUrl = "http://localhost:9200";
 		private String indexAlias = "products_search_read";
+		private String writeAlias = "products_search_write";
 		private int timeoutMs = 500;
 		private CircuitBreaker circuitBreaker = new CircuitBreaker();
 
@@ -61,6 +62,14 @@ public class ProductSearchReadPathProperties {
 
 		public void setIndexAlias(String indexAlias) {
 			this.indexAlias = indexAlias;
+		}
+
+		public String getWriteAlias() {
+			return writeAlias;
+		}
+
+		public void setWriteAlias(String writeAlias) {
+			this.writeAlias = writeAlias;
 		}
 
 		public int getTimeoutMs() {
