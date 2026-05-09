@@ -1,6 +1,7 @@
-package com.portfolio.readpath_lab.product.api;
+package com.portfolio.marketplace.productsearch.controller;
 
-import com.portfolio.readpath_lab.product.application.ProductSearchService;
+import com.portfolio.marketplace.productsearch.dto.response.ProductSearchResponse;
+import com.portfolio.marketplace.productsearch.service.ProductSearchService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(ProductSearchController.class)
+@WebMvcTest({ProductSearchController.class, ProductSearchBenchmarkController.class})
 class ProductSearchControllerTest {
 
 	@Autowired
@@ -25,7 +26,7 @@ class ProductSearchControllerTest {
 	private ProductSearchService productSearchService;
 
 	@Test
-	void searchReturnsStableBenchmarkResponseShape() throws Exception {
+	void searchReturnsApiResponseEnvelope() throws Exception {
 		when(productSearchService.search(any()))
 				.thenReturn(ProductSearchResponse.of(List.of(), 50, 100));
 
@@ -39,18 +40,18 @@ class ProductSearchControllerTest {
 						.param("limit", "50")
 						.param("offset", "100"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.items").isArray())
-				.andExpect(jsonPath("$.page.limit").value(50))
-				.andExpect(jsonPath("$.page.offset").value(100))
-				.andExpect(jsonPath("$.page.returnedCount").value(0));
+				.andExpect(jsonPath("$.data.items").isArray())
+				.andExpect(jsonPath("$.data.page.limit").value(50))
+				.andExpect(jsonPath("$.data.page.offset").value(100))
+				.andExpect(jsonPath("$.data.page.returnedCount").value(0));
 	}
 
 	@Test
-	void searchDbTunedReturnsStableBenchmarkResponseShape() throws Exception {
+	void benchmarkDbTunedEndpointIsInternal() throws Exception {
 		when(productSearchService.searchDbTuned(any()))
 				.thenReturn(ProductSearchResponse.of(List.of(), 50, 100));
 
-		mockMvc.perform(get("/api/v1/products/search/db-tuned")
+		mockMvc.perform(get("/internal/benchmarks/product-search/db-tuned")
 						.param("categoryId", "75")
 						.param("brandId", "943")
 						.param("status", "ACTIVE")
@@ -63,18 +64,18 @@ class ProductSearchControllerTest {
 						.param("limit", "50")
 						.param("offset", "100"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.items").isArray())
-				.andExpect(jsonPath("$.page.limit").value(50))
-				.andExpect(jsonPath("$.page.offset").value(100))
-				.andExpect(jsonPath("$.page.returnedCount").value(0));
+				.andExpect(jsonPath("$.data.items").isArray())
+				.andExpect(jsonPath("$.data.page.limit").value(50))
+				.andExpect(jsonPath("$.data.page.offset").value(100))
+				.andExpect(jsonPath("$.data.page.returnedCount").value(0));
 	}
 
 	@Test
-	void searchDenormalizedDbReturnsStableBenchmarkResponseShape() throws Exception {
+	void benchmarkDenormalizedDbEndpointIsInternal() throws Exception {
 		when(productSearchService.searchDenormalizedDb(any()))
 				.thenReturn(ProductSearchResponse.of(List.of(), 50, 100));
 
-		mockMvc.perform(get("/api/v1/products/search/denormalized-db")
+		mockMvc.perform(get("/internal/benchmarks/product-search/denormalized-db")
 						.param("categoryId", "75")
 						.param("brandId", "943")
 						.param("status", "ACTIVE")
@@ -87,12 +88,20 @@ class ProductSearchControllerTest {
 						.param("limit", "50")
 						.param("offset", "100"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.items").isArray())
-				.andExpect(jsonPath("$.page.limit").value(50))
-				.andExpect(jsonPath("$.page.offset").value(100))
-				.andExpect(jsonPath("$.page.returnedCount").value(0));
+				.andExpect(jsonPath("$.data.items").isArray())
+				.andExpect(jsonPath("$.data.page.limit").value(50))
+				.andExpect(jsonPath("$.data.page.offset").value(100))
+				.andExpect(jsonPath("$.data.page.returnedCount").value(0));
 
 		verify(productSearchService).searchDenormalizedDb(any());
+	}
+
+	@Test
+	void benchmarkEndpointsAreNotExposedUnderProductApi() throws Exception {
+		mockMvc.perform(get("/api/v1/products/search/db-tuned"))
+				.andExpect(status().isNotFound());
+		mockMvc.perform(get("/api/v1/products/search/denormalized-db"))
+				.andExpect(status().isNotFound());
 	}
 
 	@Test
