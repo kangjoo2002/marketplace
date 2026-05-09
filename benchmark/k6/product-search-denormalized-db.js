@@ -10,7 +10,7 @@ const PROFILE = __ENV.PROFILE || 'moderate_skew';
 const VUS = Number(__ENV.VUS || 10);
 const DURATION = __ENV.DURATION || '1m';
 const SMOKE_ONLY = (__ENV.SMOKE_ONLY || 'false').toLowerCase() === 'true';
-const ENDPOINT = '/api/v1/products/search/denormalized-db';
+const ENDPOINT = '/internal/benchmarks/product-search/denormalized-db';
 
 const b1Duration = new Trend('b1_selective_option_filter_duration', true);
 const b2Duration = new Trend('b2_broad_active_option_filter_duration', true);
@@ -156,26 +156,28 @@ function runScenario(scenario) {
 
   const limit = Number(scenario.params.limit);
   const offset = Number(scenario.params.offset);
-  if (body && body.page && typeof body.page.returnedCount === 'number') {
-    scenario.returnedCountTrend.add(body.page.returnedCount);
+  const payload = body && body.data ? body.data : body;
+
+  if (payload && payload.page && typeof payload.page.returnedCount === 'number') {
+    scenario.returnedCountTrend.add(payload.page.returnedCount);
   }
 
   const passed = check(response, {
     [`${scenario.name}: HTTP 200`]: (r) => r.status === 200,
-    [`${scenario.name}: items is an array`]: () => Array.isArray(body && body.items),
+    [`${scenario.name}: items is an array`]: () => Array.isArray(payload && payload.items),
     [`${scenario.name}: items length equals limit`]: () =>
-      Array.isArray(body && body.items) && body.items.length === limit,
-    [`${scenario.name}: page exists`]: () => Boolean(body && body.page),
-    [`${scenario.name}: page.limit matches request`]: () => body && body.page && body.page.limit === limit,
-    [`${scenario.name}: page.offset matches request`]: () => body && body.page && body.page.offset === offset,
+      Array.isArray(payload && payload.items) && payload.items.length === limit,
+    [`${scenario.name}: page exists`]: () => Boolean(body && payload.page),
+    [`${scenario.name}: page.limit matches request`]: () => body && payload.page && payload.page.limit === limit,
+    [`${scenario.name}: page.offset matches request`]: () => body && payload.page && payload.page.offset === offset,
     [`${scenario.name}: returnedCount is a number`]: () =>
-      body && body.page && typeof body.page.returnedCount === 'number',
+      body && payload.page && typeof payload.page.returnedCount === 'number',
     [`${scenario.name}: returnedCount > 0`]: () =>
-      body && body.page && typeof body.page.returnedCount === 'number' && body.page.returnedCount > 0,
+      body && payload.page && typeof payload.page.returnedCount === 'number' && payload.page.returnedCount > 0,
     [`${scenario.name}: returnedCount equals limit`]: () =>
-      body && body.page && typeof body.page.returnedCount === 'number' && body.page.returnedCount === limit,
+      body && payload.page && typeof payload.page.returnedCount === 'number' && payload.page.returnedCount === limit,
     [`${scenario.name}: returnedCount <= limit`]: () =>
-      body && body.page && typeof body.page.returnedCount === 'number' && body.page.returnedCount <= limit,
+      body && payload.page && typeof payload.page.returnedCount === 'number' && payload.page.returnedCount <= limit,
   });
 
   if (!passed) {

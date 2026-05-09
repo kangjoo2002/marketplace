@@ -8,8 +8,8 @@ Target endpoints:
 
 ```http
 GET /api/v1/products/search
-GET /api/v1/products/search/db-tuned
-GET /api/v1/products/search/denormalized-db
+GET /internal/benchmarks/product-search/db-tuned
+GET /internal/benchmarks/product-search/denormalized-db
 GET /api/v1/products/search with readpath.product-search.read-path=opensearch
 ```
 
