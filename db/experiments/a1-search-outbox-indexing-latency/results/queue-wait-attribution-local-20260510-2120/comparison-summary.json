@@ -1,0 +1,118 @@
+﻿{
+    "runId":  "queue-wait-attribution-local-20260510-2120",
+    "environment":  "local synthetic / local PostgreSQL + OpenSearch smoke",
+    "eventCount":  100,
+    "workerCount":  1,
+    "cases":  [
+                  {
+                      "batchSize":  20,
+                      "workerCount":  1,
+                      "runId":  "queue-wait-attribution-local-20260510-2120-batch-20",
+                      "eventCount":  100,
+                      "claimedEvents":  100,
+                      "doneEvents":  100,
+                      "failedEvents":  0,
+                      "pendingCount":  0,
+                      "processingCount":  0,
+                      "totalProcessingTimeMs":  82422,
+                      "totalIndexingLagMs":  {
+                                                 "max":  82576.4050000,
+                                                 "p50":  45802.308000000005,
+                                                 "p95":  79457.4898,
+                                                 "p99":  81886.11067000001,
+                                                 "doneCount":  100
+                                             },
+                      "queueWaitMs":  {
+                                          "p50":  36295,
+                                          "p95":  70085,
+                                          "p99":  70085,
+                                          "max":  70085
+                                      },
+                      "sourceDocumentLoadMs":  {
+                                                   "p50":  317,
+                                                   "p95":  634,
+                                                   "p99":  1233,
+                                                   "max":  1574
+                                               },
+                      "openSearchWriteMs":  {
+                                                "p50":  62,
+                                                "p95":  120,
+                                                "p99":  198,
+                                                "max":  250
+                                            },
+                      "outboxStateTransitionMs":  {
+                                                      "p50":  327,
+                                                      "p95":  626,
+                                                      "p99":  798,
+                                                      "max":  1571
+                                                  },
+                      "relayProcessingMs":  {
+                                                "p50":  720,
+                                                "p95":  1267,
+                                                "p99":  1976,
+                                                "max":  2567
+                                            },
+                      "openSearchWriteDeleteCallCount":  100,
+                      "relayTimingLogLineCount":  100,
+                      "relayLogSamplePath":  "relay-log-sample.txt"
+                  },
+                  {
+                      "batchSize":  100,
+                      "workerCount":  1,
+                      "runId":  "queue-wait-attribution-local-20260510-2120-batch-100",
+                      "eventCount":  100,
+                      "claimedEvents":  100,
+                      "doneEvents":  100,
+                      "failedEvents":  0,
+                      "pendingCount":  0,
+                      "processingCount":  0,
+                      "totalProcessingTimeMs":  56695,
+                      "totalIndexingLagMs":  {
+                                                 "max":  56711.2620000,
+                                                 "p50":  29800.853000000003,
+                                                 "p95":  54099.1885,
+                                                 "p99":  56219.62305,
+                                                 "doneCount":  100
+                                             },
+                      "queueWaitMs":  {
+                                          "p50":  219,
+                                          "p95":  219,
+                                          "p99":  219,
+                                          "max":  219
+                                      },
+                      "sourceDocumentLoadMs":  {
+                                                   "p50":  251,
+                                                   "p95":  384,
+                                                   "p99":  463,
+                                                   "max":  593
+                                               },
+                      "openSearchWriteMs":  {
+                                                "p50":  59,
+                                                "p95":  77,
+                                                "p99":  96,
+                                                "max":  112
+                                            },
+                      "outboxStateTransitionMs":  {
+                                                      "p50":  230,
+                                                      "p95":  356,
+                                                      "p99":  439,
+                                                      "max":  696
+                                                  },
+                      "relayProcessingMs":  {
+                                                "p50":  547,
+                                                "p95":  775,
+                                                "p99":  900,
+                                                "max":  1065
+                                            },
+                      "openSearchWriteDeleteCallCount":  100,
+                      "relayTimingLogLineCount":  100,
+                      "relayLogSamplePath":  "relay-log-sample.txt"
+                  }
+              ],
+    "resultFiles":  {
+                        "comparisonSummary":  "comparison-summary.json",
+                        "batch20Summary":  "batch-20-summary.json",
+                        "batch100Summary":  "batch-100-summary.json",
+                        "relayLogSample":  "relay-log-sample.txt"
+                    }
+}

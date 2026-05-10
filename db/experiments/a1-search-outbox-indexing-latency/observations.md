@@ -78,6 +78,28 @@ Summary:
 | OpenSearch write/delete call count | 100 |
 | relay timing line count | 100 |
 
+## 2026-05-10 — Queue wait attribution
+
+Experiment conditions:
+
+- Environment: local synthetic / local PostgreSQL + OpenSearch smoke
+- eventCount: 100
+- workerCount: 1
+- Cases: batchSize 20 and batchSize 100
+
+| batchSize | totalProcessingTimeMs | totalIndexingLagMs p50 | totalIndexingLagMs p95 | totalIndexingLagMs p99 | totalIndexingLagMs max | queueWaitMs p50 | queueWaitMs p95 | queueWaitMs p99 | queueWaitMs max | sourceDocumentLoadMs p50/p95/p99/max | openSearchWriteMs p50/p95/p99/max | outboxStateTransitionMs p50/p95/p99/max | relayProcessingMs p50/p95/p99/max | OpenSearch write/delete calls | relay timing log lines |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|---|---|---:|---:|
+| 20 | 82422 | 45802.308000000005 | 79457.4898 | 81886.11067000001 | 82576.4050000 | 36295 | 70085 | 70085 | 70085 | 317 / 634 / 1233 / 1574 | 62 / 120 / 198 / 250 | 327 / 626 / 798 / 1571 | 720 / 1267 / 1976 / 2567 | 100 | 100 |
+| 100 | 56695 | 29800.853000000003 | 54099.1885 | 56219.62305 | 56711.2620000 | 219 | 219 | 219 | 219 | 251 / 384 / 463 / 593 | 59 / 77 / 96 / 112 | 230 / 356 / 439 / 696 | 547 / 775 / 900 / 1065 | 100 | 100 |
+
+Minimal interpretation: batchSize 100 reduced `queueWaitMs` in this local smoke run, while `totalIndexingLagMs` remained above zero.
+
+Raw measurement results:
+
+```text
+db/experiments/a1-search-outbox-indexing-latency/results/queue-wait-attribution-local-20260510-2120/
+```
+
 ## Limitations
 
 - `total_indexing_lag_ms` is persisted through existing outbox timestamps.
