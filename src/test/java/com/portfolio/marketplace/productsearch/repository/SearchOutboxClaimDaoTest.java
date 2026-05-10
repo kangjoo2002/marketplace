@@ -48,6 +48,8 @@ class SearchOutboxClaimDaoTest {
 		assertThat(sql).contains("claim_token = :claimToken");
 		assertThat(sql).contains("next_retry_at = NULL");
 		assertThat(sql).contains("outbox.claim_token::text AS claim_token");
+		assertThat(sql).contains("outbox.created_at");
+		assertThat(sql).contains("outbox.updated_at AS claimed_at");
 		assertThat(params).containsEntry("batchSize", 20);
 		assertThat(params).containsEntry("processingTimeoutMs", 60000L);
 		assertThat(params).containsKey("claimToken");

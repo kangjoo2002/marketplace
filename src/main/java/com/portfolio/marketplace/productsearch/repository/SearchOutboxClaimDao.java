@@ -51,7 +51,9 @@ public class SearchOutboxClaimDao {
 				    outbox.schema_version,
 				    outbox.payload::text AS payload,
 				    outbox.retry_count,
-				    outbox.claim_token::text AS claim_token
+				    outbox.claim_token::text AS claim_token,
+				    outbox.created_at,
+				    outbox.updated_at AS claimed_at
 				""";
 		return jdbcTemplate.query(
 				sql,
@@ -67,7 +69,9 @@ public class SearchOutboxClaimDao {
 						rs.getInt("schema_version"),
 						rs.getString("payload"),
 						rs.getInt("retry_count"),
-						rs.getString("claim_token")
+						rs.getString("claim_token"),
+						rs.getObject("created_at", java.time.OffsetDateTime.class),
+						rs.getObject("claimed_at", java.time.OffsetDateTime.class)
 				)
 		);
 	}
