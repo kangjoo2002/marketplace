@@ -3,6 +3,7 @@ package com.portfolio.marketplace.productsearch.repository;
 import com.portfolio.marketplace.productsearch.domain.SearchOutboxEvent;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
@@ -13,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class SearchOutboxRepositoryTest {
+class SearchOutboxClaimDaoTest {
 
 	@Test
 	@SuppressWarnings("unchecked")
@@ -26,9 +27,9 @@ class SearchOutboxRepositoryTest {
 				paramsCaptor.capture(),
 				ArgumentMatchers.<RowMapper<SearchOutboxEvent>>any()
 		)).thenReturn(List.of());
-		SearchOutboxRepository repository = new SearchOutboxRepository(jdbcTemplate);
+		SearchOutboxClaimDao claimDao = new SearchOutboxClaimDao(jdbcTemplate);
 
-		repository.claimPendingProductEvents(20, 60000L);
+		claimDao.claimPendingProductEvents(20, 60000L);
 
 		String sql = sqlCaptor.getValue();
 		Map<String, Object> params = paramsCaptor.getValue();
@@ -37,8 +38,12 @@ class SearchOutboxRepositoryTest {
 		assertThat(sql).contains("status = 'PROCESSING'");
 		assertThat(sql).contains("updated_at <= now() - (:processingTimeoutMs * INTERVAL '1 millisecond')");
 		assertThat(sql).contains("FOR UPDATE SKIP LOCKED");
+		assertThat(sql).contains("claim_token = :claimToken");
 		assertThat(sql).contains("next_retry_at = NULL");
+		assertThat(sql).contains("outbox.claim_token::text AS claim_token");
 		assertThat(params).containsEntry("batchSize", 20);
 		assertThat(params).containsEntry("processingTimeoutMs", 60000L);
+		assertThat(params).containsKey("claimToken");
+		assertThat(params.get("claimToken")).isInstanceOf(UUID.class);
 	}
 }

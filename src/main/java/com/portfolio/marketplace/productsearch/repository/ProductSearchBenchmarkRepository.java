@@ -15,7 +15,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class ProductSearchRepository {
+public class ProductSearchBenchmarkRepository {
 
 	private static final Pattern SAFE_IDENTIFIER = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
 	private static final String PRODUCT_SEARCH_DOCUMENTS_TABLE = "product_search_documents_moderate_skew";
@@ -24,7 +24,7 @@ public class ProductSearchRepository {
 	private final String productsTable;
 	private final String productOptionsTable;
 
-	public ProductSearchRepository(
+	public ProductSearchBenchmarkRepository(
 			NamedParameterJdbcTemplate jdbcTemplate,
 			ProductSearchBaselineProperties properties
 	) {

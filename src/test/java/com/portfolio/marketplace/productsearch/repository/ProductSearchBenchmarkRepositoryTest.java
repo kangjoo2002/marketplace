@@ -21,7 +21,7 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class ProductSearchRepositoryTest {
+class ProductSearchBenchmarkRepositoryTest {
 
 	@Test
 	void searchUsesJoinDistinctOffsetBaselineShape() {
@@ -34,7 +34,7 @@ class ProductSearchRepositoryTest {
 		)).thenReturn(List.<ProductSearchItem>of());
 
 		ProductSearchBaselineProperties properties = new ProductSearchBaselineProperties();
-		ProductSearchRepository repository = new ProductSearchRepository(jdbcTemplate, properties);
+		ProductSearchBenchmarkRepository repository = new ProductSearchBenchmarkRepository(jdbcTemplate, properties);
 
 		ProductSearchCondition request = new ProductSearchCondition();
 		request.setCategoryId(35L);
@@ -71,7 +71,7 @@ class ProductSearchRepositoryTest {
 		)).thenReturn(List.<ProductSearchItem>of());
 
 		ProductSearchBaselineProperties properties = new ProductSearchBaselineProperties();
-		ProductSearchRepository repository = new ProductSearchRepository(jdbcTemplate, properties);
+		ProductSearchBenchmarkRepository repository = new ProductSearchBenchmarkRepository(jdbcTemplate, properties);
 
 		ProductSearchCondition request = new ProductSearchCondition();
 		request.setCategoryId(75L);
@@ -114,7 +114,7 @@ class ProductSearchRepositoryTest {
 		)).thenReturn(List.<ProductSearchItem>of());
 
 		ProductSearchBaselineProperties properties = new ProductSearchBaselineProperties();
-		ProductSearchRepository repository = new ProductSearchRepository(jdbcTemplate, properties);
+		ProductSearchBenchmarkRepository repository = new ProductSearchBenchmarkRepository(jdbcTemplate, properties);
 
 		ProductSearchCondition request = new ProductSearchCondition();
 		request.setCategoryId(75L);
@@ -165,7 +165,7 @@ class ProductSearchRepositoryTest {
 		)).thenReturn(List.<ProductSearchItem>of());
 
 		ProductSearchBaselineProperties properties = new ProductSearchBaselineProperties();
-		ProductSearchRepository repository = new ProductSearchRepository(jdbcTemplate, properties);
+		ProductSearchBenchmarkRepository repository = new ProductSearchBenchmarkRepository(jdbcTemplate, properties);
 
 		ProductSearchCondition request = new ProductSearchCondition();
 		request.setStatus(ProductStatus.ACTIVE);
@@ -205,7 +205,7 @@ class ProductSearchRepositoryTest {
 		)).thenReturn(List.<ProductSearchItem>of());
 
 		ProductSearchBaselineProperties properties = new ProductSearchBaselineProperties();
-		ProductSearchRepository repository = new ProductSearchRepository(jdbcTemplate, properties);
+		ProductSearchBenchmarkRepository repository = new ProductSearchBenchmarkRepository(jdbcTemplate, properties);
 
 		ProductSearchCondition request = new ProductSearchCondition();
 		request.setColor(ProductColor.BLACK);
@@ -244,7 +244,7 @@ class ProductSearchRepositoryTest {
 		)).thenReturn(List.<ProductSearchItem>of());
 
 		ProductSearchBaselineProperties properties = new ProductSearchBaselineProperties();
-		ProductSearchRepository repository = new ProductSearchRepository(jdbcTemplate, properties);
+		ProductSearchBenchmarkRepository repository = new ProductSearchBenchmarkRepository(jdbcTemplate, properties);
 
 		ProductSearchCondition request = new ProductSearchCondition();
 		request.setCategoryId(75L);

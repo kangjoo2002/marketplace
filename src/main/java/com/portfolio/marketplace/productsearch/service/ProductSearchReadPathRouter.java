@@ -4,7 +4,7 @@ import com.portfolio.marketplace.productsearch.config.ProductSearchReadPathPrope
 import com.portfolio.marketplace.productsearch.domain.ProductSearchCondition;
 import com.portfolio.marketplace.productsearch.domain.ProductSearchItem;
 import com.portfolio.marketplace.productsearch.infrastructure.opensearch.OpenSearchProductSearchException;
-import com.portfolio.marketplace.productsearch.repository.ProductSearchRepository;
+import com.portfolio.marketplace.productsearch.repository.ProductSearchQueryRepository;
 import com.portfolio.marketplace.productsearch.service.port.ProductSearchIndexReader;
 import java.util.List;
 import org.slf4j.Logger;
@@ -16,20 +16,20 @@ public class ProductSearchReadPathRouter {
 
 	private static final Logger log = LoggerFactory.getLogger(ProductSearchReadPathRouter.class);
 
-	private final ProductSearchRepository productSearchRepository;
+	private final ProductSearchQueryRepository productSearchQueryRepository;
 	private final ProductSearchIndexReader productSearchIndexReader;
 	private final ProductSearchReadPathProperties readPathProperties;
 	private final ProductSearchFallbackMetrics fallbackMetrics;
 	private final ProductSearchCircuitBreaker circuitBreaker;
 
 	public ProductSearchReadPathRouter(
-			ProductSearchRepository productSearchRepository,
+			ProductSearchQueryRepository productSearchQueryRepository,
 			ProductSearchIndexReader productSearchIndexReader,
 			ProductSearchReadPathProperties readPathProperties,
 			ProductSearchFallbackMetrics fallbackMetrics,
 			ProductSearchCircuitBreaker circuitBreaker
 	) {
-		this.productSearchRepository = productSearchRepository;
+		this.productSearchQueryRepository = productSearchQueryRepository;
 		this.productSearchIndexReader = productSearchIndexReader;
 		this.readPathProperties = readPathProperties;
 		this.fallbackMetrics = fallbackMetrics;
@@ -39,7 +39,7 @@ public class ProductSearchReadPathRouter {
 	public List<ProductSearchItem> search(ProductSearchCondition condition) {
 		readPathProperties.normalizedReadPath();
 		if (!readPathProperties.isOpenSearchReadPath()) {
-			return productSearchRepository.search(condition);
+			return productSearchQueryRepository.search(condition);
 		}
 
 		if (!circuitBreaker.tryAcquirePermission()) {
@@ -49,7 +49,7 @@ public class ProductSearchReadPathRouter {
 					ProductSearchFallbackMetrics.OpenSearchFailureReason.CIRCUIT_OPEN,
 					fallbackMetrics.snapshot().fallbackCount()
 			);
-			return recordFallbackSuccess(productSearchRepository.search(condition));
+			return recordFallbackSuccess(productSearchQueryRepository.search(condition));
 		}
 
 		try {
@@ -64,7 +64,7 @@ public class ProductSearchReadPathRouter {
 					exception.getReason(),
 					fallbackMetrics.snapshot().fallbackCount()
 			);
-			return recordFallbackSuccess(productSearchRepository.search(condition));
+			return recordFallbackSuccess(productSearchQueryRepository.search(condition));
 		}
 	}
 

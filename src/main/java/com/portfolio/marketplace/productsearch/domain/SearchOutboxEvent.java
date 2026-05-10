@@ -6,7 +6,8 @@ public record SearchOutboxEvent(
 		String eventType,
 		int schemaVersion,
 		String payload,
-		int retryCount
+		int retryCount,
+		String claimToken
 ) {
 
 	public boolean isProductDeleteEvent() {

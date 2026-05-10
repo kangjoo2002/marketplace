@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS search_outbox (
     schema_version INTEGER NOT NULL DEFAULT 1,
     payload JSONB NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    claim_token UUID,
     retry_count INTEGER NOT NULL DEFAULT 0,
     last_error TEXT,
     next_retry_at TIMESTAMPTZ,
