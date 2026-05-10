@@ -192,6 +192,16 @@ class SearchOutboxStoreTest {
 	}
 
 	private static SearchOutboxEvent event(String claimToken) {
-		return new SearchOutboxEvent(1L, 10L, "PRODUCT_UPDATED", 1, "{}", 0, claimToken);
+		return new SearchOutboxEvent(
+				1L,
+				10L,
+				"PRODUCT_UPDATED",
+				1,
+				"{}",
+				0,
+				claimToken,
+				OffsetDateTime.parse("2026-05-02T10:00:00Z"),
+				OffsetDateTime.parse("2026-05-02T10:00:05Z")
+		);
 	}
 }

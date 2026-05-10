@@ -1,5 +1,7 @@
 package com.portfolio.marketplace.productsearch.domain;
 
+import java.time.OffsetDateTime;
+
 public record SearchOutboxEvent(
 		long id,
 		long aggregateId,
@@ -7,7 +9,9 @@ public record SearchOutboxEvent(
 		int schemaVersion,
 		String payload,
 		int retryCount,
-		String claimToken
+		String claimToken,
+		OffsetDateTime createdAt,
+		OffsetDateTime claimedAt
 ) {
 
 	public boolean isProductDeleteEvent() {

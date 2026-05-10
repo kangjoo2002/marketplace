@@ -10,11 +10,16 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
@@ -23,6 +28,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(OutputCaptureExtension.class)
 class ProductSearchOutboxRelayServiceTest {
 
 	private static final String CLAIM_TOKEN = "00000000-0000-0000-0000-000000000001";
@@ -41,7 +47,7 @@ class ProductSearchOutboxRelayServiceTest {
 	);
 
 	@Test
-	void upsertsSourceDocumentAndMarksDone() {
+	void upsertsSourceDocumentAndMarksDone(CapturedOutput output) {
 		SearchOutboxEvent event = event(1L, "PRODUCT_UPDATED", 0);
 		when(outboxStore.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
 		when(documentRepository.findByProductId(10L)).thenReturn(Optional.of(activeDocument()));
@@ -51,6 +57,15 @@ class ProductSearchOutboxRelayServiceTest {
 		verify(indexWriter).upsert(activeDocument().refreshedAt(LocalDateTime.parse("2026-05-02T10:02:00")));
 		verify(outboxStore).markDone(event);
 		verify(outboxStore, never()).markFailed(any(SearchOutboxEvent.class), any());
+		assertThat(output.getOut())
+				.contains("product_search_outbox_indexing_latency")
+				.contains("eventId=1")
+				.contains("resultStatus=DONE")
+				.contains("queueWaitMs=5000")
+				.contains("sourceDocumentLoadMs=")
+				.contains("openSearchWriteMs=")
+				.contains("outboxStateTransitionMs=")
+				.contains("relayProcessingMs=");
 	}
 
 	@Test
@@ -115,7 +130,17 @@ class ProductSearchOutboxRelayServiceTest {
 	}
 
 	private static SearchOutboxEvent event(long id, String eventType, int retryCount) {
-		return new SearchOutboxEvent(id, 10L, eventType, 1, "{}", retryCount, CLAIM_TOKEN);
+		return new SearchOutboxEvent(
+				id,
+				10L,
+				eventType,
+				1,
+				"{}",
+				retryCount,
+				CLAIM_TOKEN,
+				OffsetDateTime.parse("2026-05-02T10:00:00Z"),
+				OffsetDateTime.parse("2026-05-02T10:00:05Z")
+		);
 	}
 
 	private static ProductSearchDocument activeDocument() {
