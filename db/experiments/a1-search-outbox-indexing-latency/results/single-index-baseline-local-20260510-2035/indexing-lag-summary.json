@@ -1,0 +1,54 @@
+﻿{
+    "runId":  "single-index-baseline-local-20260510-2035",
+    "environment":  "local synthetic / local PostgreSQL + OpenSearch smoke",
+    "eventCount":  100,
+    "claimedEvents":  100,
+    "doneEvents":  100,
+    "failedEvents":  0,
+    "pendingCount":  0,
+    "processingCount":  0,
+    "totalProcessingTimeMs":  32806,
+    "totalIndexingLagMs":  {
+                               "max":  32816.4550000,
+                               "p50":  16805.131,
+                               "p95":  31172.09755,
+                               "p99":  32508.988720000005,
+                               "doneCount":  100
+                           },
+    "breakdown":  {
+                      "queueWaitMs":  {
+                                          "p50":  13408,
+                                          "p95":  26453,
+                                          "p99":  26453,
+                                          "max":  26453
+                                      },
+                      "sourceDocumentLoadMs":  {
+                                                   "p50":  122,
+                                                   "p95":  174,
+                                                   "p99":  205,
+                                                   "max":  231
+                                               },
+                      "openSearchWriteMs":  {
+                                                "p50":  58,
+                                                "p95":  74,
+                                                "p99":  101,
+                                                "max":  118
+                                            },
+                      "outboxStateTransitionMs":  {
+                                                      "p50":  126,
+                                                      "p95":  168,
+                                                      "p99":  200,
+                                                      "max":  214
+                                                  },
+                      "relayProcessingMs":  {
+                                                "p50":  310,
+                                                "p95":  382,
+                                                "p99":  394,
+                                                "max":  417
+                                            }
+                  },
+    "openSearchWriteDeleteCallCount":  100,
+    "relayTimingLogLineCount":  100,
+    "indexName":  "products_search_single_index_baseline_202605102035",
+    "writeAlias":  "products_search_single_index_baseline_write"
+}

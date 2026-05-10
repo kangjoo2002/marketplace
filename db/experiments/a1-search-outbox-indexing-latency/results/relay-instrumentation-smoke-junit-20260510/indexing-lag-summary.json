@@ -1,0 +1,23 @@
+{
+  "runId": "relay-instrumentation-smoke-junit-20260510",
+  "environment": "local synthetic / junit relay instrumentation smoke",
+  "eventCount": 100,
+  "claimedEvents": 100,
+  "doneEvents": 100,
+  "failedEvents": 0,
+  "pendingCount": 0,
+  "processingCount": 0,
+  "totalProcessingTimeMs": 57,
+  "totalIndexingLagMs": {"p50":115,"p95":129,"p99":131,"max":131},
+  "breakdown": {
+    "queueWaitMs": {"p50":74,"p95":74,"p99":74,"max":74},
+    "sourceDocumentLoadMs": {"p50":0,"p95":0,"p99":0,"max":8},
+    "openSearchWriteMs": {"p50":0,"p95":0,"p99":0,"max":0},
+    "outboxStateTransitionMs": {"p50":0,"p95":0,"p99":0,"max":0},
+    "relayProcessingMs": {"p50":0,"p95":0,"p99":0,"max":9}
+  },
+  "writerCallCount": 100,
+  "bulkComparisonBaseline": false,
+  "note": "CountingIndexWriter-based values validate relay instrumentation only and must not be used as the single-index OpenSearch baseline.",
+  "relayTimingLogLineCount": 100
+}

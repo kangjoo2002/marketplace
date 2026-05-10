@@ -40,7 +40,7 @@ Run against local PostgreSQL with an explicit window or `smokeRun` marker:
 
 ```powershell
 Get-Content db\experiments\a1-search-outbox-indexing-latency\sql\measure-indexing-lag.sql |
-  docker compose exec -T postgres psql -U readpath -d readpath_lab -q -t -A `
+  docker exec -i readpath-baseline-postgres psql -U marketplace -d marketplace -q -t -A `
     -v window_start='2026-05-10T00:00:00Z' `
     -v window_end='2026-05-10T01:00:00Z'
 ```
@@ -49,7 +49,7 @@ For namespaced smoke data:
 
 ```powershell
 Get-Content db\experiments\a1-search-outbox-indexing-latency\sql\measure-indexing-lag.sql |
-  docker compose exec -T postgres psql -U readpath -d readpath_lab -q -t -A `
+  docker exec -i readpath-baseline-postgres psql -U marketplace -d marketplace -q -t -A `
     -v smoke_run='local-smoke-run-id'
 ```
 
