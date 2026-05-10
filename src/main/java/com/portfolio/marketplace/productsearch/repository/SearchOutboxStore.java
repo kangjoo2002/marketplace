@@ -6,11 +6,15 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public class SearchOutboxStore {
+
+	private static final Logger log = LoggerFactory.getLogger(SearchOutboxStore.class);
 
 	private final SearchOutboxClaimDao searchOutboxClaimDao;
 	private final SearchOutboxJpaRepository searchOutboxJpaRepository;
@@ -29,27 +33,41 @@ public class SearchOutboxStore {
 
 	@Transactional
 	public void markDone(SearchOutboxEvent event) {
-		searchOutboxJpaRepository.markDone(event.id(), claimToken(event), now());
+		int updated = searchOutboxJpaRepository.markDone(event.id(), claimToken(event), now());
+		logStaleClaimIfNotUpdated(event, "DONE", updated);
 	}
 
 	@Transactional
 	public void markPendingRetry(SearchOutboxEvent event, String lastError, LocalDateTime nextRetryAt) {
-		searchOutboxJpaRepository.markPendingRetry(
+		int updated = searchOutboxJpaRepository.markPendingRetry(
 				event.id(),
 				claimToken(event),
 				truncate(lastError),
 				toOffsetDateTime(nextRetryAt),
 				now()
 		);
+		logStaleClaimIfNotUpdated(event, "PENDING", updated);
 	}
 
 	@Transactional
 	public void markFailed(SearchOutboxEvent event, String lastError) {
-		searchOutboxJpaRepository.markFailed(event.id(), claimToken(event), truncate(lastError), now());
+		int updated = searchOutboxJpaRepository.markFailed(event.id(), claimToken(event), truncate(lastError), now());
+		logStaleClaimIfNotUpdated(event, "FAILED", updated);
 	}
 
 	private static UUID claimToken(SearchOutboxEvent event) {
 		return UUID.fromString(event.claimToken());
+	}
+
+	private static void logStaleClaimIfNotUpdated(SearchOutboxEvent event, String targetStatus, int updated) {
+		if (updated == 0) {
+			log.warn(
+					"Search outbox transition skipped by stale claim token. eventId={}, targetStatus={}, claimToken={}",
+					event.id(),
+					targetStatus,
+					event.claimToken()
+			);
+		}
 	}
 
 	private static OffsetDateTime toOffsetDateTime(LocalDateTime value) {

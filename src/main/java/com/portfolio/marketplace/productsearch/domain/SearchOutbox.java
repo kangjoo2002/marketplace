@@ -33,7 +33,7 @@ public class SearchOutbox {
 	@Column(name = "schema_version", nullable = false)
 	private Integer schemaVersion;
 
-	@Column(nullable = false, columnDefinition = "jsonb")
+	@Column(nullable = false, columnDefinition = "jsonb", updatable = false)
 	private String payload;
 
 	@Enumerated(EnumType.STRING)

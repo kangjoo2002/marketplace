@@ -4,15 +4,20 @@ import com.portfolio.marketplace.productsearch.domain.SearchOutboxEvent;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(OutputCaptureExtension.class)
 class SearchOutboxStoreTest {
 
 	private static final String CLAIM_TOKEN = "00000000-0000-0000-0000-000000000001";
@@ -55,7 +60,27 @@ class SearchOutboxStoreTest {
 	}
 
 	@Test
-	void markFailedIgnoresStaleClaimToken() {
+	void markDoneIgnoresStaleClaimTokenAndLogs(CapturedOutput output) {
+		SearchOutboxEvent event = event();
+		when(jpaRepository.markDone(
+				eq(1L),
+				eq(UUID.fromString(CLAIM_TOKEN)),
+				any(OffsetDateTime.class)
+		)).thenReturn(0);
+
+		assertThatCode(() -> store.markDone(event))
+				.doesNotThrowAnyException();
+
+		verify(jpaRepository).markDone(eq(1L), eq(UUID.fromString(CLAIM_TOKEN)), any(OffsetDateTime.class));
+		assertThat(output.getOut())
+				.contains("Search outbox transition skipped by stale claim token")
+				.contains("eventId=1")
+				.contains("targetStatus=DONE")
+				.contains("claimToken=" + CLAIM_TOKEN);
+	}
+
+	@Test
+	void markFailedIgnoresStaleClaimTokenAndLogs(CapturedOutput output) {
 		SearchOutboxEvent event = event();
 		when(jpaRepository.markFailed(
 				eq(1L),
@@ -73,6 +98,11 @@ class SearchOutboxStoreTest {
 				eq("missing"),
 				any(OffsetDateTime.class)
 		);
+		assertThat(output.getOut())
+				.contains("Search outbox transition skipped by stale claim token")
+				.contains("eventId=1")
+				.contains("targetStatus=FAILED")
+				.contains("claimToken=" + CLAIM_TOKEN);
 	}
 
 	private static SearchOutboxEvent event() {
