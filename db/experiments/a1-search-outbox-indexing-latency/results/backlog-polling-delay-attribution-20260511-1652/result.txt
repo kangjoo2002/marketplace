@@ -1,0 +1,9 @@
+# Backlog polling delay attribution
+
+conditions: local PostgreSQL + local OpenSearch, eventCount=1000, batchSize=100, replicaCount=1, health UP before insert, stabilizationSeconds=3
+
+| fixedDelayMs | totalProcessingTimeMs | DONE | FAILED | PENDING | PROCESSING | totalIndexingLagMs p95 | queueWaitMs p95 | batchClaimCount | row count by claimed_by | duplicate claim | retry/failed | runId |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|---|---|
+| 5000 | 58458 | 1000 | 0 | 0 | 0 | 57340.06509999999 | 56820.936 | 10 | spring-app-1=1000 | false | false | backlog-polling-delay-backlog-polling-delay-attribution-20260511-1652-5000 |
+| 1000 | 22467 | 1000 | 0 | 0 | 0 | 21349.2774 | 20663.721 | 10 | spring-app-1=1000 | false | false | backlog-polling-delay-backlog-polling-delay-attribution-20260511-1652-1000 |
+| 100 | 12663 | 1000 | 0 | 0 | 0 | 11681.40435 | 11257.34 | 10 | spring-app-1=1000 | false | false | backlog-polling-delay-backlog-polling-delay-attribution-20260511-1652-100 |

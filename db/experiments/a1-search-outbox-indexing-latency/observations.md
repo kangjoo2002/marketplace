@@ -47,3 +47,28 @@ Raw results:
 ```text
 db/experiments/a1-search-outbox-indexing-latency/results/spring-replica-scaling-smoke-local-20260511-1622/
 ```
+
+## 2026-05-11 — Backlog polling delay attribution
+
+Experiment conditions:
+
+- Environment: local PostgreSQL + local OpenSearch
+- eventCount: 1000
+- batchSize: 100
+- replicaCount: 1
+- Spring app started before smoke row insert
+- Spring app returned actuator health `UP`
+- stabilizationSeconds: 3
+- each case executed once
+
+| fixedDelayMs | totalProcessingTimeMs | DONE | FAILED | PENDING | PROCESSING | totalIndexingLagMs p95 | queueWaitMs p95 | batchClaimCount | row count by claimed_by | duplicate claim | retry/failed |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|---|
+| 5000 | 58458 | 1000 | 0 | 0 | 0 | 57340.06509999999 | 56820.936 | 10 | spring-app-1=1000 | false | false |
+| 1000 | 22467 | 1000 | 0 | 0 | 0 | 21349.2774 | 20663.721 | 10 | spring-app-1=1000 | false | false |
+| 100 | 12663 | 1000 | 0 | 0 | 0 | 11681.40435 | 11257.34 | 10 | spring-app-1=1000 | false | false |
+
+Result path:
+
+```text
+db/experiments/a1-search-outbox-indexing-latency/results/backlog-polling-delay-attribution-20260511-1652/result.txt
+```
