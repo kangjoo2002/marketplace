@@ -1,0 +1,67 @@
+﻿{
+    "runId":  "spring-replica-relay-smoke-steady-state-local-20260511-1200-replica-2",
+    "environment":  "local synthetic / local PostgreSQL + OpenSearch smoke",
+    "eventCount":  100,
+    "batchSize":  100,
+    "replicaCount":  2,
+    "doneEvents":  100,
+    "failedEvents":  0,
+    "pendingCount":  0,
+    "processingCount":  0,
+    "retryCount":  0,
+    "totalProcessingTimeMs":  7708,
+    "totalIndexingLagMs":  {
+                               "max":  7380.5410000,
+                               "p50":  6028.59,
+                               "p95":  7266.597949999999,
+                               "p99":  7360.4202399999995,
+                               "doneCount":  100
+                           },
+    "breakdown":  {
+                      "queueWaitMs":  {
+                                          "p50":  4225,
+                                          "p95":  4225,
+                                          "p99":  4225,
+                                          "max":  4225
+                                      },
+                      "sourceDocumentLoadMs":  {
+                                                   "p50":  6,
+                                                   "p95":  13,
+                                                   "p99":  59,
+                                                   "max":  459
+                                               },
+                      "openSearchWriteMs":  {
+                                                "p50":  7,
+                                                "p95":  16,
+                                                "p99":  57,
+                                                "max":  198
+                                            },
+                      "outboxStateTransitionMs":  {
+                                                      "p50":  6,
+                                                      "p95":  10,
+                                                      "p99":  28,
+                                                      "max":  90
+                                                  },
+                      "relayProcessingMs":  {
+                                                "p50":  20,
+                                                "p95":  41,
+                                                "p99":  108,
+                                                "max":  749
+                                            }
+                  },
+    "relayTimingLogLineCount":  100,
+    "duplicateClaimDetected":  false,
+    "duplicateClaimEventIds":  [
+
+                               ],
+    "failedRelayLineCount":  0,
+    "staleClaimLineCount":  0,
+    "retryOrFailedDetected":  false,
+    "healthPorts":  [
+                        32770,
+                        32769
+                    ],
+    "stabilizationSeconds":  3,
+    "indexName":  "products_search_spring_replica_smoke_2026051112002",
+    "writeAlias":  "products_search_spring_replica_smoke_write"
+}

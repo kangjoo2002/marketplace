@@ -1,7 +1,10 @@
 param(
-    [string] $RunId = "spring-replica-relay-smoke-local-$(Get-Date -Format 'yyyyMMdd-HHmm')",
-    [int] $EventCount = 100,
+    [string] $RunId = "spring-replica-scaling-smoke-local-$(Get-Date -Format 'yyyyMMdd-HHmm')",
+    [int] $EventCount = 1000,
     [int] $BatchSize = 100,
+    [int[]] $ReplicaCounts = @(1, 2, 4),
+    [int] $HealthTimeoutSeconds = 180,
+    [int] $StabilizationSeconds = 3,
     [string] $PostgresContainer = "readpath-baseline-postgres",
     [string] $PostgresUser = "marketplace",
     [string] $PostgresDatabase = "marketplace",
@@ -19,7 +22,7 @@ $mappingPath = Join-Path $repoRoot "db\experiments\a1-opensearch-index-mapping-a
 $measureSqlPath = Join-Path $experimentDir "sql\measure-indexing-lag.sql"
 $resultDir = Join-Path $experimentDir "results\$RunId"
 $writeAlias = "products_search_spring_replica_smoke_write"
-$productStartId = -35000000
+$productStartId = -36000000
 
 New-Item -ItemType Directory -Force -Path $resultDir | Out-Null
 
@@ -233,32 +236,52 @@ ON search_outbox(status, created_at, id);
 function Initialize-PostgresRows {
     param([Parameter(Mandatory = $true)][string] $CaseRunId)
 
-    $products = 1..$EventCount | ForEach-Object {
-        $productId = $productStartId - $_
-        "($productId, $(3500 + $_), 75, $(900 + ($_ % 10)), 'ACTIVE', $(10000 + $_), 4.50, $_, now(), now())"
-    }
-    $options = 1..$EventCount | ForEach-Object {
-        $productId = $productStartId - $_
-        "($productId, 'BLACK', 'M', 'IN_STOCK')"
-    }
-    $outbox = 1..$EventCount | ForEach-Object {
-        $productId = $productStartId - $_
-        "('PRODUCT', $productId, 'PRODUCT_UPDATED', jsonb_build_object('productId', $productId, 'eventType', 'PRODUCT_UPDATED', 'smokeRun', '$CaseRunId', 'tombstone', false), now(), now())"
-    }
-
     $sql = @"
-DELETE FROM search_outbox WHERE payload->>'smokeRun' LIKE 'spring-replica-relay-smoke-%';
-DELETE FROM product_options WHERE product_id BETWEEN -35000100 AND -35000001;
-DELETE FROM products WHERE id BETWEEN -35000100 AND -35000001;
 INSERT INTO products (id, seller_id, category_id, brand_id, status, price, rating, review_count, created_at, updated_at)
-VALUES
-$($products -join ",`n");
+SELECT
+    $productStartId - seq,
+    3500 + seq,
+    75,
+    900 + (seq % 10),
+    'ACTIVE',
+    10000 + seq,
+    4.50,
+    seq,
+    now(),
+    now()
+FROM generate_series(1, $EventCount) AS seq;
+
 INSERT INTO product_options (product_id, color, size, stock_status)
-VALUES
-$($options -join ",`n");
+SELECT
+    $productStartId - seq,
+    'BLACK',
+    'M',
+    'IN_STOCK'
+FROM generate_series(1, $EventCount) AS seq;
+
 INSERT INTO search_outbox (aggregate_type, aggregate_id, event_type, payload, created_at, updated_at)
-VALUES
-$($outbox -join ",`n");
+SELECT
+    'PRODUCT',
+    $productStartId - seq,
+    'PRODUCT_UPDATED',
+    jsonb_build_object(
+        'productId', $productStartId - seq,
+        'eventType', 'PRODUCT_UPDATED',
+        'smokeRun', '$CaseRunId',
+        'tombstone', false
+    ),
+    now(),
+    now()
+FROM generate_series(1, $EventCount) AS seq;
+"@
+    Invoke-PsqlText -Sql $sql | Out-Null
+}
+
+function Clear-PostgresSmokeRows {
+    $sql = @"
+DELETE FROM search_outbox WHERE payload->>'smokeRun' LIKE 'spring-replica-%';
+DELETE FROM product_options WHERE product_id BETWEEN -36010000 AND -36000001;
+DELETE FROM products WHERE id BETWEEN -36010000 AND -36000001;
 "@
     Invoke-PsqlText -Sql $sql | Out-Null
 }
@@ -302,7 +325,7 @@ function Wait-CaseDone {
 function Parse-RelayLogSamples {
     param([string[]] $LogLines)
 
-    $pattern = "product_search_outbox_indexing_latency eventId=(\d+) aggregateId=(-?\d+) eventType=([A-Z_]+) resultStatus=([A-Z_]+) queueWaitMs=(\d+) sourceDocumentLoadMs=(\d+) openSearchWriteMs=(\d+) outboxStateTransitionMs=(\d+) relayProcessingMs=(\d+)"
+    $pattern = "^(?<replica>spring-app-\d+)\s+\|\s+(?<doneAt>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z).*product_search_outbox_indexing_latency eventId=(?<eventId>\d+) aggregateId=(?<aggregateId>-?\d+) eventType=(?<eventType>[A-Z_]+) resultStatus=(?<resultStatus>[A-Z_]+) queueWaitMs=(?<queueWaitMs>\d+) sourceDocumentLoadMs=(?<sourceDocumentLoadMs>\d+) openSearchWriteMs=(?<openSearchWriteMs>\d+) outboxStateTransitionMs=(?<outboxStateTransitionMs>\d+) relayProcessingMs=(?<relayProcessingMs>\d+)"
     $samples = New-Object System.Collections.ArrayList
     foreach ($line in $LogLines) {
         $match = [regex]::Match($line, $pattern)
@@ -311,24 +334,144 @@ function Parse-RelayLogSamples {
         }
         [void] $samples.Add([pscustomobject]@{
             line = $line
-            eventId = [long] $match.Groups[1].Value
-            aggregateId = [long] $match.Groups[2].Value
-            eventType = $match.Groups[3].Value
-            resultStatus = $match.Groups[4].Value
-            queueWaitMs = [long] $match.Groups[5].Value
-            sourceDocumentLoadMs = [long] $match.Groups[6].Value
-            openSearchWriteMs = [long] $match.Groups[7].Value
-            outboxStateTransitionMs = [long] $match.Groups[8].Value
-            relayProcessingMs = [long] $match.Groups[9].Value
+            replica = $match.Groups["replica"].Value
+            doneAt = [datetimeoffset]::Parse($match.Groups["doneAt"].Value, [System.Globalization.CultureInfo]::InvariantCulture)
+            eventId = [long] $match.Groups["eventId"].Value
+            aggregateId = [long] $match.Groups["aggregateId"].Value
+            eventType = $match.Groups["eventType"].Value
+            resultStatus = $match.Groups["resultStatus"].Value
+            queueWaitMs = [long] $match.Groups["queueWaitMs"].Value
+            sourceDocumentLoadMs = [long] $match.Groups["sourceDocumentLoadMs"].Value
+            openSearchWriteMs = [long] $match.Groups["openSearchWriteMs"].Value
+            outboxStateTransitionMs = [long] $match.Groups["outboxStateTransitionMs"].Value
+            relayProcessingMs = [long] $match.Groups["relayProcessingMs"].Value
         })
     }
     return @($samples.ToArray())
+}
+
+function Get-ReplicaClaimStats {
+    param(
+        [object[]] $Samples,
+        [Parameter(Mandatory = $true)][int] $ReplicaCount
+    )
+
+    $validSamples = @(
+        $Samples |
+            Where-Object { $null -ne $_ -and $null -ne $_.PSObject.Properties["replica"] }
+    )
+
+    return @(
+        1..$ReplicaCount |
+            ForEach-Object {
+                $replicaName = "spring-app-$_"
+                $replicaSamples = @($validSamples | Where-Object { $_.replica -eq $replicaName })
+                if ($replicaSamples.Count -eq 0) {
+                    [ordered]@{
+                        replica = $replicaName
+                        claimCount = 0
+                        timingLogLineCount = 0
+                        batchClaimCount = 0
+                        firstClaimAt = $null
+                        lastDoneAt = $null
+                    }
+                }
+                else {
+                    $firstClaimAt = @(
+                        $replicaSamples |
+                            ForEach-Object { $_.doneAt.AddMilliseconds(-1 * $_.relayProcessingMs) } |
+                            Sort-Object |
+                            Select-Object -First 1
+                    )[0]
+                    $lastDoneAt = @(
+                        $replicaSamples |
+                            ForEach-Object { $_.doneAt } |
+                            Sort-Object |
+                            Select-Object -Last 1
+                    )[0]
+                    [ordered]@{
+                        replica = $replicaName
+                        claimCount = $replicaSamples.Count
+                        timingLogLineCount = $replicaSamples.Count
+                        batchClaimCount = @($replicaSamples | Group-Object queueWaitMs).Count
+                        firstClaimAt = $firstClaimAt.ToString("o")
+                        lastDoneAt = $lastDoneAt.ToString("o")
+                    }
+                }
+            }
+    )
 }
 
 function Stop-ComposeProject {
     param([Parameter(Mandatory = $true)][string] $ProjectName)
 
     docker compose -p $ProjectName -f $composeFile down --remove-orphans | Out-Null
+}
+
+function Get-SpringAppContainerIds {
+    param([Parameter(Mandatory = $true)][string] $ProjectName)
+
+    return @(
+        docker compose -p $ProjectName -f $composeFile ps -q spring-app |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+    )
+}
+
+function Get-ContainerPublishedPort {
+    param([Parameter(Mandatory = $true)][string] $ContainerId)
+
+    $portText = docker port $ContainerId 8080/tcp
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($portText)) {
+        return $null
+    }
+
+    $firstBinding = @($portText)[0]
+    $match = [regex]::Match($firstBinding, ":(\d+)$")
+    if (-not $match.Success) {
+        return $null
+    }
+
+    return [int] $match.Groups[1].Value
+}
+
+function Test-SpringAppHealth {
+    param([Parameter(Mandatory = $true)][int] $Port)
+
+    try {
+        $response = Invoke-RestMethod `
+            -Method "GET" `
+            -Uri "http://localhost:$Port/actuator/health" `
+            -TimeoutSec 2
+        return $response.status -eq "UP"
+    }
+    catch {
+        return $false
+    }
+}
+
+function Wait-SpringReplicasHealthy {
+    param(
+        [Parameter(Mandatory = $true)][string] $ProjectName,
+        [Parameter(Mandatory = $true)][int] $ReplicaCount
+    )
+
+    $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+    do {
+        $containerIds = @(Get-SpringAppContainerIds -ProjectName $ProjectName)
+        if ($containerIds.Count -eq $ReplicaCount) {
+            $ports = @($containerIds | ForEach-Object { Get-ContainerPublishedPort -ContainerId $_ })
+            if ($ports.Count -eq $ReplicaCount -and -not ($ports | Where-Object { $null -eq $_ })) {
+                $healthyCount = @($ports | Where-Object { Test-SpringAppHealth -Port $_ }).Count
+                if ($healthyCount -eq $ReplicaCount) {
+                    return $ports
+                }
+            }
+        }
+
+        Start-Sleep -Milliseconds 1000
+    } while ($stopwatch.Elapsed.TotalSeconds -lt $HealthTimeoutSeconds)
+
+    throw "Spring app replicas did not become healthy within $HealthTimeoutSeconds seconds"
 }
 
 function Run-Case {
@@ -341,21 +484,27 @@ function Run-Case {
     Stop-ComposeProject -ProjectName $projectName
     Initialize-OpenSearchTarget -IndexName $indexName
     Initialize-PostgresSchema
-    Initialize-PostgresRows -CaseRunId $caseRunId
+    Clear-PostgresSmokeRows
 
-    $runStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
     docker compose -p $projectName -f $composeFile up -d --scale spring-app=$ReplicaCount | Out-Null
 
     try {
+        $healthPorts = @(Wait-SpringReplicasHealthy -ProjectName $projectName -ReplicaCount $ReplicaCount)
+        Start-Sleep -Seconds $StabilizationSeconds
+
+        $logSince = (Get-Date).ToUniversalTime().ToString("o")
+        Initialize-PostgresRows -CaseRunId $caseRunId
+        $runStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
         $counts = Wait-CaseDone -CaseRunId $caseRunId
         $runStopwatch.Stop()
-        $logLines = @(docker compose -p $projectName -f $composeFile logs --no-color spring-app)
+        $logLines = @(docker compose -p $projectName -f $composeFile logs --no-color --since $logSince spring-app)
     }
     finally {
         Stop-ComposeProject -ProjectName $projectName
     }
 
-    $samples = Parse-RelayLogSamples -LogLines $logLines
+    $samples = @(Parse-RelayLogSamples -LogLines $logLines)
+    $replicaClaimStats = @(Get-ReplicaClaimStats -Samples $samples -ReplicaCount $ReplicaCount)
     $measureSql = Get-Content -Raw $measureSqlPath
     $lagJsonText = $measureSql | docker exec -i $PostgresContainer psql -U $PostgresUser -d $PostgresDatabase -v ON_ERROR_STOP=1 -q -t -A -v smoke_run=$caseRunId
     if ($LASTEXITCODE -ne 0) {
@@ -393,11 +542,17 @@ function Run-Case {
             relayProcessingMs = Get-Percentiles ([long[]] @($samples | ForEach-Object { $_.relayProcessingMs }))
         }
         relayTimingLogLineCount = $samples.Count
+        batchClaimCount = @($samples | Group-Object queueWaitMs).Count
+        firstClaimAt = @($replicaClaimStats | ForEach-Object { $_.firstClaimAt } | Sort-Object | Select-Object -First 1)[0]
+        lastDoneAt = @($replicaClaimStats | ForEach-Object { $_.lastDoneAt } | Sort-Object | Select-Object -Last 1)[0]
+        replicaClaimStats = $replicaClaimStats
         duplicateClaimDetected = $duplicateClaimEventIds.Count -gt 0
         duplicateClaimEventIds = $duplicateClaimEventIds
         failedRelayLineCount = $failedRelayLineCount
         staleClaimLineCount = $staleClaimLineCount
         retryOrFailedDetected = ([int] $counts.retryCount -gt 0 -or [int] $counts.failedCount -gt 0 -or $failedRelayLineCount -gt 0)
+        healthPorts = $healthPorts
+        stabilizationSeconds = $StabilizationSeconds
         indexName = $indexName
         writeAlias = $writeAlias
     }
@@ -436,7 +591,7 @@ if ($LASTEXITCODE -ne 0) {
     throw "gradlew bootJar failed"
 }
 
-$caseResults = @(1, 2, 4 | ForEach-Object { Run-Case -ReplicaCount $_ })
+$caseResults = @($ReplicaCounts | ForEach-Object { Run-Case -ReplicaCount $_ })
 
 $comparisonCases = @($caseResults | ForEach-Object {
     $summary = $_.summary
@@ -458,17 +613,25 @@ $comparisonCases = @($caseResults | ForEach-Object {
         outboxStateTransitionMs = $summary.breakdown.outboxStateTransitionMs
         relayProcessingMs = $summary.breakdown.relayProcessingMs
         relayTimingLogLineCount = $summary.relayTimingLogLineCount
+        batchClaimCount = $summary.batchClaimCount
+        firstClaimAt = $summary.firstClaimAt
+        lastDoneAt = $summary.lastDoneAt
+        replicaClaimStats = $summary.replicaClaimStats
         duplicateClaimDetected = $summary.duplicateClaimDetected
         retryOrFailedDetected = $summary.retryOrFailedDetected
+        healthPorts = $summary.healthPorts
+        stabilizationSeconds = $summary.stabilizationSeconds
     }
 })
 
 $comparison = [ordered]@{
     runId = $RunId
-    analysisScope = "primary local synthetic Spring replica relay smoke"
+    analysisScope = "primary local synthetic steady-state Spring replica scaling smoke"
     environment = "local synthetic / local PostgreSQL + OpenSearch smoke"
     eventCount = $EventCount
     batchSize = $BatchSize
+    healthCheck = "all Spring app replicas returned actuator health UP before smoke rows were inserted"
+    stabilizationSeconds = $StabilizationSeconds
     cases = $comparisonCases
     resultFiles = [ordered]@{
         comparisonSummary = "comparison-summary.json"

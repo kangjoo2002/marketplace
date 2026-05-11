@@ -1,5 +1,5 @@
 ﻿{
-    "runId":  "spring-replica-relay-smoke-local-20260511-1035-replica-4",
+    "runId":  "spring-replica-relay-smoke-steady-state-local-20260511-1200-replica-4",
     "environment":  "local synthetic / local PostgreSQL + OpenSearch smoke",
     "eventCount":  100,
     "batchSize":  100,
@@ -9,44 +9,44 @@
     "pendingCount":  0,
     "processingCount":  0,
     "retryCount":  0,
-    "totalProcessingTimeMs":  43518,
+    "totalProcessingTimeMs":  6889,
     "totalIndexingLagMs":  {
-                               "max":  43308.6430000,
-                               "p50":  42285.0965,
-                               "p95":  43221.5666,
-                               "p99":  43292.49115,
+                               "max":  6581.9100000,
+                               "p50":  5469.300499999999,
+                               "p95":  6478.878,
+                               "p99":  6562.25454,
                                "doneCount":  100
                            },
     "breakdown":  {
                       "queueWaitMs":  {
-                                          "p50":  39441,
-                                          "p95":  39441,
-                                          "p99":  39441,
-                                          "max":  39441
+                                          "p50":  2810,
+                                          "p95":  2810,
+                                          "p99":  2810,
+                                          "max":  2810
                                       },
                       "sourceDocumentLoadMs":  {
                                                    "p50":  6,
                                                    "p95":  12,
                                                    "p99":  14,
-                                                   "max":  896
+                                                   "max":  600
                                                },
                       "openSearchWriteMs":  {
                                                 "p50":  8,
-                                                "p95":  14,
-                                                "p99":  28,
-                                                "max":  426
+                                                "p95":  17,
+                                                "p99":  115,
+                                                "max":  352
                                             },
                       "outboxStateTransitionMs":  {
                                                       "p50":  6,
                                                       "p95":  12,
-                                                      "p99":  14,
-                                                      "max":  161
+                                                      "p99":  33,
+                                                      "max":  94
                                                   },
                       "relayProcessingMs":  {
-                                                "p50":  20,
-                                                "p95":  33,
-                                                "p99":  56,
-                                                "max":  1484
+                                                "p50":  21,
+                                                "p95":  41,
+                                                "p99":  137,
+                                                "max":  1048
                                             }
                   },
     "relayTimingLogLineCount":  100,
@@ -57,6 +57,13 @@
     "failedRelayLineCount":  0,
     "staleClaimLineCount":  0,
     "retryOrFailedDetected":  false,
-    "indexName":  "products_search_spring_replica_smoke_2026051110354",
+    "healthPorts":  [
+                        32772,
+                        32774,
+                        32773,
+                        32771
+                    ],
+    "stabilizationSeconds":  3,
+    "indexName":  "products_search_spring_replica_smoke_2026051112004",
     "writeAlias":  "products_search_spring_replica_smoke_write"
 }

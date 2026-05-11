@@ -12,6 +12,10 @@ services:
       READPATH_PRODUCT_SEARCH_INDEXING_RELAY_ENABLED: "true"
       READPATH_PRODUCT_SEARCH_INDEXING_RELAY_BATCH_SIZE: "100"
       MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health
+    ports:
+      - target: 8080
+        published: "0"
+        protocol: tcp
     volumes:
       - ../../../build/libs:/app/libs:ro
     extra_hosts:
