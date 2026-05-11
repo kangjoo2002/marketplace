@@ -8,13 +8,6 @@ Primary scaling smoke:
 results/spring-replica-scaling-smoke-local-20260511-1622/
 ```
 
-Single-batch reference results only:
-
-```text
-results/worker-count-attribution-local-20260510-2157/
-results/spring-replica-relay-smoke-steady-state-local-20260511-1200/
-```
-
 The script-based workerCount result and the Spring replica `eventCount=100`, `batchSize=100` result are not scaling evidence because one worker/replica can claim all rows in a single batch.
 
 ## 2026-05-11 — Spring replica steady-state scaling smoke

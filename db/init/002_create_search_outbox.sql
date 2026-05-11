@@ -32,6 +32,12 @@ CREATE TABLE IF NOT EXISTS search_outbox (
     )
 );
 
+ALTER TABLE search_outbox
+ADD COLUMN IF NOT EXISTS claimed_by VARCHAR(120);
+
+ALTER TABLE search_outbox
+ADD COLUMN IF NOT EXISTS claimed_at TIMESTAMPTZ;
+
 CREATE INDEX IF NOT EXISTS idx_search_outbox_pending_next_retry
 ON search_outbox(created_at, id)
 WHERE status = 'PENDING';
