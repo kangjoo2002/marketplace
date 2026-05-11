@@ -123,3 +123,7 @@ Result path:
 ```text
 db/experiments/a1-search-outbox-indexing-latency/results/prometheus-distributed-backlog-strategy-comparison-20260511-2111/result.txt
 ```
+
+Decision note:
+
+Based on the corrected Prometheus distributed backlog strategy comparison, shorter polling was not selected because it increased idle polling, and larger batch was not selected as the default because it increases per-claim batch size. Multi-batch per scheduler run was selected because it kept `fixedDelayMs` and `batchSize` unchanged while producing the best `totalProcessingTimeMs` and `totalIndexingLagMs p95`.
