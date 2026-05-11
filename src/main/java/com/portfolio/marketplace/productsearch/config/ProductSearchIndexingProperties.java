@@ -20,6 +20,7 @@ public class ProductSearchIndexingProperties {
 		private boolean enabled = false;
 		private int batchSize = 20;
 		private long fixedDelayMs = 5000;
+		private int maxDrainRounds = 1;
 		private int maxRetryCount = 3;
 		private long retryDelayMs = 10000;
 		private long processingTimeoutMs = 60000;
@@ -47,6 +48,14 @@ public class ProductSearchIndexingProperties {
 
 		public void setFixedDelayMs(long fixedDelayMs) {
 			this.fixedDelayMs = fixedDelayMs;
+		}
+
+		public int getMaxDrainRounds() {
+			return maxDrainRounds;
+		}
+
+		public void setMaxDrainRounds(int maxDrainRounds) {
+			this.maxDrainRounds = maxDrainRounds;
 		}
 
 		public int getMaxRetryCount() {
