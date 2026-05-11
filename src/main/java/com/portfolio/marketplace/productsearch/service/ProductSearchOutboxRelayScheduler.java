@@ -65,6 +65,7 @@ public class ProductSearchOutboxRelayScheduler {
 		).increment(processedCount);
 		DistributionSummary.builder("product_search_outbox_relay_claim_rows")
 				.tag("instance_id", instanceId)
+				.publishPercentiles(0.5, 0.95)
 				.register(meterRegistry)
 				.record(processedCount);
 	}
@@ -77,8 +78,9 @@ public class ProductSearchOutboxRelayScheduler {
 				"result",
 				result(totalProcessedCount)
 		).increment();
-		Timer.builder("product_search_outbox_relay_scheduler_run_duration_seconds")
+		Timer.builder("product_search_outbox_relay_scheduler_run_duration")
 				.tag("instance_id", instanceId)
+				.publishPercentiles(0.95)
 				.register(meterRegistry)
 				.record(System.nanoTime() - startedAtNanos, TimeUnit.NANOSECONDS);
 	}

@@ -1,0 +1,59 @@
+# Prometheus-based distributed backlog strategy comparison
+
+conditions: local PostgreSQL + local OpenSearch, Prometheus server, scrape_interval=1s, evaluation_interval=1s, eventCount=4000, replicaCount=4, app health UP before insert, Prometheus targets UP and scraped at least twice before insert, idleSeconds=30, each case once.
+
+Prometheus metrics:
+
+- product_search_outbox_relay_scheduler_runs_total{instance_id,result}
+- product_search_outbox_relay_batch_attempts_total{instance_id,result}
+- product_search_outbox_relay_processed_rows_total{instance_id}
+- product_search_outbox_relay_scheduler_run_duration_seconds{instance_id}
+- product_search_outbox_relay_claim_rows{instance_id}
+
+## Case execution order
+
+| order | case | drainStartEpoch | drainEndEpoch | idleStartEpoch | idleEndEpoch |
+|---:|---|---:|---:|---:|---:|
+| 1 | baseline | 1778501544.315 | 1778501620.629 | 1778501620.645 | 1778501650.682 |
+| 2 | shorter polling | 1778501687.022 | 1778501736.783 | 1778501736.800 | 1778501766.848 |
+| 3 | larger batch | 1778501803.872 | 1778501853.073 | 1778501853.099 | 1778501883.134 |
+| 4 | multi-batch per scheduler run | 1778501923.278 | 1778501968.175 | 1778501968.190 | 1778501998.225 |
+
+## Case results
+
+| order | case | batchSize | fixedDelayMs | maxDrainRounds | totalProcessingTimeMs | eventsPerSecond | schedulerRunCount | emptyRunCount | nonEmptyRunCount | batchAttemptCount | processedRowsTotal | schedulerRunDuration p95 | claimRows p50 | claimRows p95 | claimRows max | queueWaitMs p50 | queueWaitMs p95 | queueWaitMs p99 | queueWaitMs max | totalIndexingLagMs p50 | totalIndexingLagMs p95 | totalIndexingLagMs p99 | totalIndexingLagMs max | batchClaimCount | avgRowsPerClaim | maxRowsPerClaim | DONE | FAILED | PENDING | PROCESSING | retryCount | duplicateClaim | DB DONE = Prom processedRowsTotal |
+|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|
+| 1 | baseline | 100 | 5000 | 1 | 72858 | 54.9 | 42.0 | 2.0 | 40.0 | 42.0 | 4000.0 | 4.831576 | 100.0 | 100.0 | 100.0 | 35777.3295 | 68586.30374999976 | 70495.235 | 70495.235 | 36668.085 | 69754.4047 | 71402.25275 | 72236.568 | 40 | 100.0 | 100 | 4000 | 0 | 0 | 0 | 0 | false | true |
+| 2 | shorter polling | 100 | 1000 | 1 | 45152 | 88.59 | 59.0 | 19.0 | 40.0 | 59.0 | 4000.0 | 7.247495 | 100.0 | 100.0 | 100.0 | 25406.9465 | 42968.96734999999 | 43005.195 | 43005.195 | 26863.2325 | 43607.8028 | 44560.69733 | 44793.175 | 40 | 100.0 | 100 | 4000 | 0 | 0 | 0 | 0 | false | true |
+| 3 | larger batch | 500 | 5000 | 1 | 44697 | 89.49 | 11.0 | 3.0 | 8.0 | 11.0 | 4000.0 | 20.400833 | 496.0 | 496.0 | 500.0 | 14634.904999999999 | 28306.799 | 28306.799 | 28306.799 | 24001.949500000002 | 42028.38735 | 43633.62555 | 44178.312 | 8 | 500.0 | 500 | 4000 | 0 | 0 | 0 | 0 | false | true |
+| 4 | multi-batch per scheduler run | 100 | 5000 | 5 | 40377 | 99.07 | 12.0 | 3.0 | 9.0 | 45.0 | 4000.0 | 19.327091 | 100.0 | 100.0 | 100.0 | 21119.1855 | 36296.321599999595 | 37947.504 | 37947.504 | 22616.882 | 38273.38575 | 39806.91362 | 40237.579 | 40 | 100.0 | 100 | 4000 | 0 | 0 | 0 | 0 | false | true |
+
+## Replica claim distribution
+
+| case | claimed_by | rowCount |
+|---|---|---:|
+| baseline | spring-app-1 | 1000 |
+| baseline | spring-app-2 | 1000 |
+| baseline | spring-app-3 | 1000 |
+| baseline | spring-app-4 | 1000 |
+| shorter polling | spring-app-1 | 1000 |
+| shorter polling | spring-app-2 | 1000 |
+| shorter polling | spring-app-3 | 1000 |
+| shorter polling | spring-app-4 | 1000 |
+| larger batch | spring-app-1 | 1000 |
+| larger batch | spring-app-2 | 1000 |
+| larger batch | spring-app-3 | 1000 |
+| larger batch | spring-app-4 | 1000 |
+| multi-batch per scheduler run | spring-app-1 | 900 |
+| multi-batch per scheduler run | spring-app-2 | 1000 |
+| multi-batch per scheduler run | spring-app-3 | 1100 |
+| multi-batch per scheduler run | spring-app-4 | 1000 |
+
+## Idle polling
+
+| case | schedulerRunCount | emptyRunCount | nonEmptyRunCount | emptyRunRatio | batchAttemptCount | emptyBatchAttemptCount | nonEmptyBatchAttemptCount | processedRowsTotal |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| baseline | 24.0 | 24.0 | 0.0 | 1.0 | 24.0 | 24.0 | 0.0 | 0.0 |
+| shorter polling | 119.0 | 119.0 | 0.0 | 1.0 | 119.0 | 119.0 | 0.0 | 0.0 |
+| larger batch | 24.0 | 24.0 | 0.0 | 1.0 | 24.0 | 24.0 | 0.0 | 0.0 |
+| multi-batch per scheduler run | 24.0 | 24.0 | 0.0 | 1.0 | 24.0 | 24.0 | 0.0 | 0.0 |

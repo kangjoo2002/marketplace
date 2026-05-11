@@ -78,7 +78,7 @@ class ProductSearchOutboxRelaySchedulerTest {
 		assertThat(counter("product_search_outbox_relay_processed_rows_total")).isZero();
 		assertThat(summaryCount("product_search_outbox_relay_claim_rows")).isEqualTo(1L);
 		assertThat(summaryTotal("product_search_outbox_relay_claim_rows")).isZero();
-		assertThat(timerCount("product_search_outbox_relay_scheduler_run_duration_seconds")).isEqualTo(1L);
+		assertThat(timerCount("product_search_outbox_relay_scheduler_run_duration")).isEqualTo(1L);
 	}
 
 	@Test
@@ -96,7 +96,7 @@ class ProductSearchOutboxRelaySchedulerTest {
 		assertThat(counter("product_search_outbox_relay_processed_rows_total")).isEqualTo(140.0);
 		assertThat(summaryCount("product_search_outbox_relay_claim_rows")).isEqualTo(2L);
 		assertThat(summaryTotal("product_search_outbox_relay_claim_rows")).isEqualTo(140.0);
-		assertThat(timerCount("product_search_outbox_relay_scheduler_run_duration_seconds")).isEqualTo(1L);
+		assertThat(timerCount("product_search_outbox_relay_scheduler_run_duration")).isEqualTo(1L);
 	}
 
 	private double counter(String name, String tagKey, String tagValue) {
