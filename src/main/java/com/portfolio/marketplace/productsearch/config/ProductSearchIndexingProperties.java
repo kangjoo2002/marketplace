@@ -23,6 +23,7 @@ public class ProductSearchIndexingProperties {
 		private int maxRetryCount = 3;
 		private long retryDelayMs = 10000;
 		private long processingTimeoutMs = 60000;
+		private String instanceId = "local-relay";
 
 		public boolean isEnabled() {
 			return enabled;
@@ -70,6 +71,14 @@ public class ProductSearchIndexingProperties {
 
 		public void setProcessingTimeoutMs(long processingTimeoutMs) {
 			this.processingTimeoutMs = processingTimeoutMs;
+		}
+
+		public String getInstanceId() {
+			return instanceId;
+		}
+
+		public void setInstanceId(String instanceId) {
+			this.instanceId = instanceId;
 		}
 	}
 }

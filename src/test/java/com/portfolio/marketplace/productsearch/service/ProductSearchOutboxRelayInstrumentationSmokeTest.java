@@ -195,7 +195,11 @@ class ProductSearchOutboxRelayInstrumentationSmokeTest {
 		}
 
 		@Override
-		public List<SearchOutboxEvent> claimPendingProductEvents(int batchSize, long processingTimeoutMs) {
+		public List<SearchOutboxEvent> claimPendingProductEvents(
+				int batchSize,
+				long processingTimeoutMs,
+				String relayInstanceId
+		) {
 			if (claimed) {
 				return List.of();
 			}
@@ -456,4 +460,3 @@ class ProductSearchOutboxRelayInstrumentationSmokeTest {
 		}
 	}
 }
-

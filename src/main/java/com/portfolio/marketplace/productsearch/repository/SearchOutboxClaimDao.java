@@ -16,7 +16,11 @@ public class SearchOutboxClaimDao {
 		this.jdbcTemplate = jdbcTemplate;
 	}
 
-	public List<SearchOutboxEvent> claimPendingProductEvents(int batchSize, long processingTimeoutMs) {
+	public List<SearchOutboxEvent> claimPendingProductEvents(
+			int batchSize,
+			long processingTimeoutMs,
+			String relayInstanceId
+	) {
 		UUID claimToken = UUID.randomUUID();
 		String sql = """
 				WITH claimed AS (
@@ -40,6 +44,8 @@ public class SearchOutboxClaimDao {
 				UPDATE search_outbox outbox
 				SET status = 'PROCESSING',
 				    claim_token = :claimToken,
+				    claimed_by = :relayInstanceId,
+				    claimed_at = now(),
 				    next_retry_at = NULL,
 				    updated_at = now()
 				FROM claimed
@@ -53,14 +59,15 @@ public class SearchOutboxClaimDao {
 				    outbox.retry_count,
 				    outbox.claim_token::text AS claim_token,
 				    outbox.created_at,
-				    outbox.updated_at AS claimed_at
+				    outbox.claimed_at
 				""";
 		return jdbcTemplate.query(
 				sql,
 				Map.of(
 						"batchSize", batchSize,
 						"processingTimeoutMs", processingTimeoutMs,
-						"claimToken", claimToken
+						"claimToken", claimToken,
+						"relayInstanceId", relayInstanceId
 				),
 				(rs, rowNum) -> new SearchOutboxEvent(
 						rs.getLong("id"),

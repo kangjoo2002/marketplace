@@ -36,7 +36,7 @@ class SearchOutboxClaimDaoTest {
 		)).thenReturn(List.of());
 		SearchOutboxClaimDao claimDao = new SearchOutboxClaimDao(jdbcTemplate);
 
-		claimDao.claimPendingProductEvents(20, 60000L);
+		claimDao.claimPendingProductEvents(20, 60000L, "relay-1");
 
 		String sql = sqlCaptor.getValue();
 		Map<String, Object> params = paramsCaptor.getValue();
@@ -46,12 +46,15 @@ class SearchOutboxClaimDaoTest {
 		assertThat(sql).contains("updated_at <= now() - (:processingTimeoutMs * INTERVAL '1 millisecond')");
 		assertThat(sql).contains("FOR UPDATE SKIP LOCKED");
 		assertThat(sql).contains("claim_token = :claimToken");
+		assertThat(sql).contains("claimed_by = :relayInstanceId");
+		assertThat(sql).contains("claimed_at = now()");
 		assertThat(sql).contains("next_retry_at = NULL");
 		assertThat(sql).contains("outbox.claim_token::text AS claim_token");
 		assertThat(sql).contains("outbox.created_at");
-		assertThat(sql).contains("outbox.updated_at AS claimed_at");
+		assertThat(sql).contains("outbox.claimed_at");
 		assertThat(params).containsEntry("batchSize", 20);
 		assertThat(params).containsEntry("processingTimeoutMs", 60000L);
+		assertThat(params).containsEntry("relayInstanceId", "relay-1");
 		assertThat(params).containsKey("claimToken");
 		assertThat(params.get("claimToken")).isInstanceOf(UUID.class);
 	}
@@ -78,8 +81,8 @@ class SearchOutboxClaimDaoTest {
 		SearchOutboxClaimDao claimDao = new SearchOutboxClaimDao(jdbcTemplate);
 		ExecutorService executor = Executors.newFixedThreadPool(2);
 
-		executor.submit(() -> claimDao.claimPendingProductEvents(1, 60000L));
-		executor.submit(() -> claimDao.claimPendingProductEvents(1, 60000L));
+		executor.submit(() -> claimDao.claimPendingProductEvents(1, 60000L, "relay-1"));
+		executor.submit(() -> claimDao.claimPendingProductEvents(1, 60000L, "relay-2"));
 		assertThat(ready.await(1, TimeUnit.SECONDS)).isTrue();
 		start.countDown();
 		executor.shutdown();
@@ -89,6 +92,7 @@ class SearchOutboxClaimDaoTest {
 			assertThat(sql).contains("FOR UPDATE SKIP LOCKED");
 			assertThat(sql).contains("LIMIT :batchSize");
 			assertThat(sql).contains("claim_token = :claimToken");
+			assertThat(sql).contains("claimed_by = :relayInstanceId");
 			assertThat(sql).contains("status = 'PENDING'");
 			assertThat(sql).contains("status = 'PROCESSING'");
 		});

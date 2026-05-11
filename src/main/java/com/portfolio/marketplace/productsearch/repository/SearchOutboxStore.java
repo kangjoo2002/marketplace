@@ -27,8 +27,12 @@ public class SearchOutboxStore {
 		this.searchOutboxJpaRepository = searchOutboxJpaRepository;
 	}
 
-	public List<SearchOutboxEvent> claimPendingProductEvents(int batchSize, long processingTimeoutMs) {
-		return searchOutboxClaimDao.claimPendingProductEvents(batchSize, processingTimeoutMs);
+	public List<SearchOutboxEvent> claimPendingProductEvents(
+			int batchSize,
+			long processingTimeoutMs,
+			String relayInstanceId
+	) {
+		return searchOutboxClaimDao.claimPendingProductEvents(batchSize, processingTimeoutMs, relayInstanceId);
 	}
 
 	@Transactional

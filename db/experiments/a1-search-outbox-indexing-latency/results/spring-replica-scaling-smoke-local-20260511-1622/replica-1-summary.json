@@ -1,0 +1,50 @@
+{
+  "runId": "spring-replica-scaling-smoke-local-20260511-1622-replica-1",
+  "environment": "local synthetic / local PostgreSQL + OpenSearch smoke",
+  "eventCount": 1000,
+  "batchSize": 100,
+  "replicaCount": 1,
+  "doneEvents": 1000,
+  "failedEvents": 0,
+  "pendingCount": 0,
+  "processingCount": 0,
+  "retryCount": 0,
+  "totalProcessingTimeMs": 59060,
+  "totalIndexingLagMs": {
+    "max": 58742.65,
+    "p50": 30928.074,
+    "p95": 58231.97895,
+    "p99": 58638.50535,
+    "doneCount": 1000
+  },
+  "breakdown": {
+    "queueWaitMs": {
+      "max": 57720.433,
+      "p50": 30405.167500000003,
+      "p95": 57720.433,
+      "p99": 57720.433
+    }
+  },
+  "claimedRowCount": 1000,
+  "batchClaimCount": 10,
+  "firstClaimAt": "2026-05-11T07:22:41.669433+00:00",
+  "lastDoneAt": "2026-05-11T07:23:38.967651+00:00",
+  "replicaClaimStats": [
+    {
+      "replica": "spring-app-1",
+      "claimCount": 1000,
+      "lastDoneAt": "2026-05-11T07:23:38.967651+00:00",
+      "firstClaimAt": "2026-05-11T07:22:41.669433+00:00",
+      "batchClaimCount": 10,
+      "claimedRowCount": 1000
+    }
+  ],
+  "duplicateClaimDetected": false,
+  "duplicateClaimEventIds": [],
+  "retryOrFailedDetected": false,
+  "healthPorts": [
+    18091
+  ],
+  "stabilizationSeconds": 3,
+  "writeAlias": "products_search_spring_replica_smoke_write"
+}

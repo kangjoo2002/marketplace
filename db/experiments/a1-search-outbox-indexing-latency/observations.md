@@ -5,7 +5,7 @@
 Primary scaling smoke:
 
 ```text
-results/spring-replica-scaling-smoke-local-20260511-1340/
+results/spring-replica-scaling-smoke-local-20260511-1622/
 ```
 
 Single-batch reference results only:
@@ -31,26 +31,26 @@ Experiment conditions:
 - stabilizationSeconds: 3
 - each case executed once
 
-| replicaCount | totalProcessingTimeMs | totalIndexingLagMs p50 | totalIndexingLagMs p95 | totalIndexingLagMs p99 | totalIndexingLagMs max | queueWaitMs p50 | queueWaitMs p95 | queueWaitMs p99 | queueWaitMs max | sourceDocumentLoadMs p50/p95/p99/max | openSearchWriteMs p50/p95/p99/max | outboxStateTransitionMs p50/p95/p99/max | relayProcessingMs p50/p95/p99/max | DONE | FAILED | PENDING | PROCESSING | duplicate claim | retry/failed | batch claim count | first claim at | last DONE at |
-|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|---|---|---:|---:|---:|---:|---|---|---:|---|---|
-| 1 | 65675 | 34162.3465 | 64264.523949999995 | 64879.75836 | 65045.6660000 | 30044 | 63424 | 63424 | 63424 | 4 / 8 / 15 / 491 | 6 / 11 / 18 / 120 | 5 / 9 / 16 / 120 | 16 / 28 / 50 / 720 | 1000 | 0 | 0 | 0 | false | false | 10 | 2026-05-11T04:57:40.5660000+00:00 | 2026-05-11T04:58:44.9830000+00:00 |
-| 2 | 42472 | 23443.8675 | 41178.14565 | 41805.12879 | 41955.8840000 | 18137 | 40235 | 40235 | 40235 | 6 / 21 / 46 / 2576 | 7 / 22 / 49 / 128 | 6 / 22 / 43 / 233 | 21 / 66 / 137 / 2933 | 1000 | 0 | 0 | 0 | false | false | 10 | 2026-05-11T04:59:18.9840000+00:00 | 2026-05-11T05:00:00.3660000+00:00 |
-| 4 | 33011 | 18605.6665 | 31947.1076 | 32666.992179999997 | 32823.2040000 | 15624 | 31076 | 31076 | 31076 | 14 / 43 / 90 / 2650 | 15 / 50 / 159 / 415 | 14 / 50 / 101 / 483 | 46 / 141 / 250 / 3201 | 1000 | 0 | 0 | 0 | false | false | 10 | 2026-05-11T05:01:09.0250000+00:00 | 2026-05-11T05:01:40.7260000+00:00 |
+| replicaCount | totalProcessingTimeMs | totalIndexingLagMs p50 | totalIndexingLagMs p95 | totalIndexingLagMs p99 | totalIndexingLagMs max | queueWaitMs p50 | queueWaitMs p95 | queueWaitMs p99 | queueWaitMs max | DONE | FAILED | PENDING | PROCESSING | duplicate claim | retry/failed | batch claim count | first claim at | last DONE at |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|---:|---|---|
+| 1 | 59060 | 30928.074 | 58231.97895 | 58638.50535 | 58742.65 | 30405.167500000003 | 57720.433 | 57720.433 | 57720.433 | 1000 | 0 | 0 | 0 | false | false | 10 | 2026-05-11T07:22:41.669433+00:00 | 2026-05-11T07:23:38.967651+00:00 |
+| 2 | 27450 | 14038.35 | 26572.9839 | 26878.55102 | 26964.566 | 13314.2065 | 25963.724 | 25963.724 | 25963.724 | 1000 | 0 | 0 | 0 | false | false | 10 | 2026-05-11T07:23:55.803089+00:00 | 2026-05-11T07:24:22.548791+00:00 |
+| 4 | 16160 | 8969.813999999998 | 15510.03335 | 15717.91418 | 15805.851 | 8321.688 | 14684.716 | 14684.716 | 14684.716 | 1000 | 0 | 0 | 0 | false | false | 10 | 2026-05-11T07:24:54.274555+00:00 | 2026-05-11T07:25:09.132252+00:00 |
 
 Replica claim counts:
 
-| replicaCount | replica | claimCount | timingLogLineCount | batchClaimCount | firstClaimAt | lastDoneAt |
+| replicaCount | replica | claimCount | claimedRowCount | batchClaimCount | firstClaimAt | lastDoneAt |
 |---:|---|---:|---:|---:|---|---|
-| 1 | spring-app-1 | 1000 | 1000 | 10 | 2026-05-11T04:57:40.5660000+00:00 | 2026-05-11T04:58:44.9830000+00:00 |
-| 2 | spring-app-1 | 500 | 500 | 5 | 2026-05-11T04:59:18.9840000+00:00 | 2026-05-11T04:59:54.4070000+00:00 |
-| 2 | spring-app-2 | 500 | 500 | 5 | 2026-05-11T04:59:23.4280000+00:00 | 2026-05-11T05:00:00.3660000+00:00 |
-| 4 | spring-app-1 | 200 | 200 | 2 | 2026-05-11T05:01:12.6030000+00:00 | 2026-05-11T05:01:34.1200000+00:00 |
-| 4 | spring-app-2 | 300 | 300 | 3 | 2026-05-11T05:01:12.2510000+00:00 | 2026-05-11T05:01:40.7260000+00:00 |
-| 4 | spring-app-3 | 200 | 200 | 2 | 2026-05-11T05:01:11.6940000+00:00 | 2026-05-11T05:01:34.1760000+00:00 |
-| 4 | spring-app-4 | 300 | 300 | 3 | 2026-05-11T05:01:09.0250000+00:00 | 2026-05-11T05:01:36.0280000+00:00 |
+| 1 | spring-app-1 | 1000 | 1000 | 10 | 2026-05-11T07:22:41.669433+00:00 | 2026-05-11T07:23:38.967651+00:00 |
+| 2 | spring-app-1 | 500 | 500 | 5 | 2026-05-11T07:23:55.803089+00:00 | 2026-05-11T07:24:22.20664+00:00 |
+| 2 | spring-app-2 | 500 | 500 | 5 | 2026-05-11T07:23:56.304775+00:00 | 2026-05-11T07:24:22.548791+00:00 |
+| 4 | spring-app-1 | 300 | 300 | 3 | 2026-05-11T07:24:54.500676+00:00 | 2026-05-11T07:25:09.132252+00:00 |
+| 4 | spring-app-2 | 200 | 200 | 2 | 2026-05-11T07:24:55.228126+00:00 | 2026-05-11T07:25:03.609295+00:00 |
+| 4 | spring-app-3 | 200 | 200 | 2 | 2026-05-11T07:24:56.933494+00:00 | 2026-05-11T07:25:04.725452+00:00 |
+| 4 | spring-app-4 | 300 | 300 | 3 | 2026-05-11T07:24:54.274555+00:00 | 2026-05-11T07:25:09.008039+00:00 |
 
 Raw results:
 
 ```text
-db/experiments/a1-search-outbox-indexing-latency/results/spring-replica-scaling-smoke-local-20260511-1340/
+db/experiments/a1-search-outbox-indexing-latency/results/spring-replica-scaling-smoke-local-20260511-1622/
 ```

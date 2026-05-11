@@ -44,7 +44,8 @@ public class ProductSearchOutboxRelayService {
 		ProductSearchIndexingProperties.Relay relay = indexingProperties.getRelay();
 		List<SearchOutboxEvent> events = outboxStore.claimPendingProductEvents(
 				relay.getBatchSize(),
-				relay.getProcessingTimeoutMs()
+				relay.getProcessingTimeoutMs(),
+				relay.getInstanceId()
 		);
 		for (SearchOutboxEvent event : events) {
 			processEvent(event);

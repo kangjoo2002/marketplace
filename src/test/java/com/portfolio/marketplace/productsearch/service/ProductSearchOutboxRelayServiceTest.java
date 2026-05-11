@@ -49,7 +49,7 @@ class ProductSearchOutboxRelayServiceTest {
 	@Test
 	void upsertsSourceDocumentAndMarksDone(CapturedOutput output) {
 		SearchOutboxEvent event = event(1L, "PRODUCT_UPDATED", 0);
-		when(outboxStore.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
+		when(outboxStore.claimPendingProductEvents(20, 60000L, "local-relay")).thenReturn(List.of(event));
 		when(documentRepository.findByProductId(10L)).thenReturn(Optional.of(activeDocument()));
 
 		relayService.processBatch();
@@ -71,7 +71,7 @@ class ProductSearchOutboxRelayServiceTest {
 	@Test
 	void deletesDocumentForProductDeletedEvent() {
 		SearchOutboxEvent event = event(2L, "PRODUCT_DELETED", 0);
-		when(outboxStore.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
+		when(outboxStore.claimPendingProductEvents(20, 60000L, "local-relay")).thenReturn(List.of(event));
 
 		relayService.processBatch();
 
@@ -83,7 +83,7 @@ class ProductSearchOutboxRelayServiceTest {
 	@Test
 	void deletesDocumentWhenSourceStatusIsDeleted() {
 		SearchOutboxEvent event = event(3L, "PRODUCT_STATUS_CHANGED", 0);
-		when(outboxStore.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
+		when(outboxStore.claimPendingProductEvents(20, 60000L, "local-relay")).thenReturn(List.of(event));
 		when(documentRepository.findByProductId(10L)).thenReturn(Optional.of(deletedDocument()));
 
 		relayService.processBatch();
@@ -96,7 +96,7 @@ class ProductSearchOutboxRelayServiceTest {
 	@Test
 	void schedulesRetryWhenIndexWriteFailsBeforeMaxRetry() {
 		SearchOutboxEvent event = event(4L, "PRODUCT_UPDATED", 0);
-		when(outboxStore.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
+		when(outboxStore.claimPendingProductEvents(20, 60000L, "local-relay")).thenReturn(List.of(event));
 		when(documentRepository.findByProductId(10L)).thenReturn(Optional.of(activeDocument()));
 		org.mockito.Mockito.doThrow(new IllegalStateException("OpenSearch down"))
 				.when(indexWriter)
@@ -116,7 +116,7 @@ class ProductSearchOutboxRelayServiceTest {
 	@Test
 	void marksFailedWhenIndexWriteFailsAtMaxRetry() {
 		SearchOutboxEvent event = event(5L, "PRODUCT_UPDATED", 2);
-		when(outboxStore.claimPendingProductEvents(20, 60000L)).thenReturn(List.of(event));
+		when(outboxStore.claimPendingProductEvents(20, 60000L, "local-relay")).thenReturn(List.of(event));
 		when(documentRepository.findByProductId(10L)).thenReturn(Optional.of(activeDocument()));
 		org.mockito.Mockito.doThrow(new IllegalStateException("OpenSearch down"))
 				.when(indexWriter)

@@ -1,0 +1,86 @@
+# replicaCount=1
+{
+  "runId": "spring-replica-scaling-smoke-local-20260511-1622-replica-1",
+  "replicaClaimStats": [
+    {
+      "replica": "spring-app-1",
+      "claimCount": 1000,
+      "lastDoneAt": "2026-05-11T07:23:38.967651+00:00",
+      "firstClaimAt": "2026-05-11T07:22:41.669433+00:00",
+      "batchClaimCount": 10,
+      "claimedRowCount": 1000
+    }
+  ],
+  "batchClaimCount": 10,
+  "firstClaimAt": "2026-05-11T07:22:41.669433+00:00",
+  "lastDoneAt": "2026-05-11T07:23:38.967651+00:00"
+}
+
+# replicaCount=2
+{
+  "runId": "spring-replica-scaling-smoke-local-20260511-1622-replica-2",
+  "replicaClaimStats": [
+    {
+      "replica": "spring-app-1",
+      "claimCount": 500,
+      "lastDoneAt": "2026-05-11T07:24:22.20664+00:00",
+      "firstClaimAt": "2026-05-11T07:23:55.803089+00:00",
+      "batchClaimCount": 5,
+      "claimedRowCount": 500
+    },
+    {
+      "replica": "spring-app-2",
+      "claimCount": 500,
+      "lastDoneAt": "2026-05-11T07:24:22.548791+00:00",
+      "firstClaimAt": "2026-05-11T07:23:56.304775+00:00",
+      "batchClaimCount": 5,
+      "claimedRowCount": 500
+    }
+  ],
+  "batchClaimCount": 10,
+  "firstClaimAt": "2026-05-11T07:23:55.803089+00:00",
+  "lastDoneAt": "2026-05-11T07:24:22.548791+00:00"
+}
+
+# replicaCount=4
+{
+  "runId": "spring-replica-scaling-smoke-local-20260511-1622-replica-4",
+  "replicaClaimStats": [
+    {
+      "replica": "spring-app-1",
+      "claimCount": 300,
+      "lastDoneAt": "2026-05-11T07:25:09.132252+00:00",
+      "firstClaimAt": "2026-05-11T07:24:54.500676+00:00",
+      "batchClaimCount": 3,
+      "claimedRowCount": 300
+    },
+    {
+      "replica": "spring-app-2",
+      "claimCount": 200,
+      "lastDoneAt": "2026-05-11T07:25:03.609295+00:00",
+      "firstClaimAt": "2026-05-11T07:24:55.228126+00:00",
+      "batchClaimCount": 2,
+      "claimedRowCount": 200
+    },
+    {
+      "replica": "spring-app-3",
+      "claimCount": 200,
+      "lastDoneAt": "2026-05-11T07:25:04.725452+00:00",
+      "firstClaimAt": "2026-05-11T07:24:56.933494+00:00",
+      "batchClaimCount": 2,
+      "claimedRowCount": 200
+    },
+    {
+      "replica": "spring-app-4",
+      "claimCount": 300,
+      "lastDoneAt": "2026-05-11T07:25:09.008039+00:00",
+      "firstClaimAt": "2026-05-11T07:24:54.274555+00:00",
+      "batchClaimCount": 3,
+      "claimedRowCount": 300
+    }
+  ],
+  "batchClaimCount": 10,
+  "firstClaimAt": "2026-05-11T07:24:54.274555+00:00",
+  "lastDoneAt": "2026-05-11T07:25:09.132252+00:00"
+}
+

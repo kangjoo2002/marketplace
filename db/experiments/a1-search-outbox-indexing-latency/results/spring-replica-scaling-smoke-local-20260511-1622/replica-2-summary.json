@@ -1,0 +1,59 @@
+{
+  "runId": "spring-replica-scaling-smoke-local-20260511-1622-replica-2",
+  "environment": "local synthetic / local PostgreSQL + OpenSearch smoke",
+  "eventCount": 1000,
+  "batchSize": 100,
+  "replicaCount": 2,
+  "doneEvents": 1000,
+  "failedEvents": 0,
+  "pendingCount": 0,
+  "processingCount": 0,
+  "retryCount": 0,
+  "totalProcessingTimeMs": 27450,
+  "totalIndexingLagMs": {
+    "max": 26964.566,
+    "p50": 14038.35,
+    "p95": 26572.9839,
+    "p99": 26878.55102,
+    "doneCount": 1000
+  },
+  "breakdown": {
+    "queueWaitMs": {
+      "max": 25963.724,
+      "p50": 13314.2065,
+      "p95": 25963.724,
+      "p99": 25963.724
+    }
+  },
+  "claimedRowCount": 1000,
+  "batchClaimCount": 10,
+  "firstClaimAt": "2026-05-11T07:23:55.803089+00:00",
+  "lastDoneAt": "2026-05-11T07:24:22.548791+00:00",
+  "replicaClaimStats": [
+    {
+      "replica": "spring-app-1",
+      "claimCount": 500,
+      "lastDoneAt": "2026-05-11T07:24:22.20664+00:00",
+      "firstClaimAt": "2026-05-11T07:23:55.803089+00:00",
+      "batchClaimCount": 5,
+      "claimedRowCount": 500
+    },
+    {
+      "replica": "spring-app-2",
+      "claimCount": 500,
+      "lastDoneAt": "2026-05-11T07:24:22.548791+00:00",
+      "firstClaimAt": "2026-05-11T07:23:56.304775+00:00",
+      "batchClaimCount": 5,
+      "claimedRowCount": 500
+    }
+  ],
+  "duplicateClaimDetected": false,
+  "duplicateClaimEventIds": [],
+  "retryOrFailedDetected": false,
+  "healthPorts": [
+    18101,
+    18102
+  ],
+  "stabilizationSeconds": 3,
+  "writeAlias": "products_search_spring_replica_smoke_write"
+}
