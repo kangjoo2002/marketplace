@@ -1,0 +1,172 @@
+﻿{
+    "runId":  "spring-replica-relay-smoke-local-20260511-1035",
+    "analysisScope":  "primary local synthetic Spring replica relay smoke",
+    "environment":  "local synthetic / local PostgreSQL + OpenSearch smoke",
+    "eventCount":  100,
+    "batchSize":  100,
+    "cases":  [
+                  {
+                      "replicaCount":  1,
+                      "batchSize":  100,
+                      "runId":  "spring-replica-relay-smoke-local-20260511-1035-replica-1",
+                      "eventCount":  100,
+                      "doneEvents":  100,
+                      "failedEvents":  0,
+                      "pendingCount":  0,
+                      "processingCount":  0,
+                      "retryCount":  0,
+                      "totalProcessingTimeMs":  54482,
+                      "totalIndexingLagMs":  {
+                                                 "max":  54138.5310000,
+                                                 "p50":  52345.01149999999,
+                                                 "p95":  54051.736750000004,
+                                                 "p99":  54121.305,
+                                                 "doneCount":  100
+                                             },
+                      "queueWaitMs":  {
+                                          "p50":  49475,
+                                          "p95":  49475,
+                                          "p99":  49475,
+                                          "max":  49475
+                                      },
+                      "sourceDocumentLoadMs":  {
+                                                   "p50":  7,
+                                                   "p95":  26,
+                                                   "p99":  49,
+                                                   "max":  539
+                                               },
+                      "openSearchWriteMs":  {
+                                                "p50":  9,
+                                                "p95":  33,
+                                                "p99":  243,
+                                                "max":  438
+                                            },
+                      "outboxStateTransitionMs":  {
+                                                      "p50":  7,
+                                                      "p95":  24,
+                                                      "p99":  64,
+                                                      "max":  140
+                                                  },
+                      "relayProcessingMs":  {
+                                                "p50":  25,
+                                                "p95":  80,
+                                                "p99":  357,
+                                                "max":  1118
+                                            },
+                      "relayTimingLogLineCount":  100,
+                      "duplicateClaimDetected":  false,
+                      "retryOrFailedDetected":  false
+                  },
+                  {
+                      "replicaCount":  2,
+                      "batchSize":  100,
+                      "runId":  "spring-replica-relay-smoke-local-20260511-1035-replica-2",
+                      "eventCount":  100,
+                      "doneEvents":  100,
+                      "failedEvents":  0,
+                      "pendingCount":  0,
+                      "processingCount":  0,
+                      "retryCount":  0,
+                      "totalProcessingTimeMs":  33825,
+                      "totalIndexingLagMs":  {
+                                                 "max":  33386.4930000,
+                                                 "p50":  32229.271,
+                                                 "p95":  33276.818199999994,
+                                                 "p99":  33367.90377,
+                                                 "doneCount":  100
+                                             },
+                      "queueWaitMs":  {
+                                          "p50":  29882,
+                                          "p95":  29882,
+                                          "p99":  29882,
+                                          "max":  29882
+                                      },
+                      "sourceDocumentLoadMs":  {
+                                                   "p50":  6,
+                                                   "p95":  11,
+                                                   "p99":  11,
+                                                   "max":  858
+                                               },
+                      "openSearchWriteMs":  {
+                                                "p50":  7,
+                                                "p95":  12,
+                                                "p99":  15,
+                                                "max":  305
+                                            },
+                      "outboxStateTransitionMs":  {
+                                                      "p50":  6,
+                                                      "p95":  8,
+                                                      "p99":  13,
+                                                      "max":  135
+                                                  },
+                      "relayProcessingMs":  {
+                                                "p50":  20,
+                                                "p95":  30,
+                                                "p99":  34,
+                                                "max":  1300
+                                            },
+                      "relayTimingLogLineCount":  100,
+                      "duplicateClaimDetected":  false,
+                      "retryOrFailedDetected":  false
+                  },
+                  {
+                      "replicaCount":  4,
+                      "batchSize":  100,
+                      "runId":  "spring-replica-relay-smoke-local-20260511-1035-replica-4",
+                      "eventCount":  100,
+                      "doneEvents":  100,
+                      "failedEvents":  0,
+                      "pendingCount":  0,
+                      "processingCount":  0,
+                      "retryCount":  0,
+                      "totalProcessingTimeMs":  43518,
+                      "totalIndexingLagMs":  {
+                                                 "max":  43308.6430000,
+                                                 "p50":  42285.0965,
+                                                 "p95":  43221.5666,
+                                                 "p99":  43292.49115,
+                                                 "doneCount":  100
+                                             },
+                      "queueWaitMs":  {
+                                          "p50":  39441,
+                                          "p95":  39441,
+                                          "p99":  39441,
+                                          "max":  39441
+                                      },
+                      "sourceDocumentLoadMs":  {
+                                                   "p50":  6,
+                                                   "p95":  12,
+                                                   "p99":  14,
+                                                   "max":  896
+                                               },
+                      "openSearchWriteMs":  {
+                                                "p50":  8,
+                                                "p95":  14,
+                                                "p99":  28,
+                                                "max":  426
+                                            },
+                      "outboxStateTransitionMs":  {
+                                                      "p50":  6,
+                                                      "p95":  12,
+                                                      "p99":  14,
+                                                      "max":  161
+                                                  },
+                      "relayProcessingMs":  {
+                                                "p50":  20,
+                                                "p95":  33,
+                                                "p99":  56,
+                                                "max":  1484
+                                            },
+                      "relayTimingLogLineCount":  100,
+                      "duplicateClaimDetected":  false,
+                      "retryOrFailedDetected":  false
+                  }
+              ],
+    "resultFiles":  {
+                        "comparisonSummary":  "comparison-summary.json",
+                        "replica1Summary":  "replica-1-summary.json",
+                        "replica2Summary":  "replica-2-summary.json",
+                        "replica4Summary":  "replica-4-summary.json",
+                        "relayLogSample":  "relay-log-sample.txt"
+                    }
+}

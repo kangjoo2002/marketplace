@@ -1,0 +1,18 @@
+services:
+  spring-app:
+    image: eclipse-temurin:21-jre
+    working_dir: /app
+    command: ["java", "-jar", "/app/libs/marketplace-0.0.1-SNAPSHOT.jar"]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:15432/marketplace
+      SPRING_DATASOURCE_USERNAME: marketplace
+      SPRING_DATASOURCE_PASSWORD: marketplace
+      READPATH_PRODUCT_SEARCH_OPEN_SEARCH_BASE_URL: http://host.docker.internal:9200
+      READPATH_PRODUCT_SEARCH_OPEN_SEARCH_WRITE_ALIAS: products_search_spring_replica_smoke_write
+      READPATH_PRODUCT_SEARCH_INDEXING_RELAY_ENABLED: "true"
+      READPATH_PRODUCT_SEARCH_INDEXING_RELAY_BATCH_SIZE: "100"
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health
+    volumes:
+      - ../../../build/libs:/app/libs:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

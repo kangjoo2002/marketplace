@@ -1,0 +1,169 @@
+﻿{
+    "runId":  "worker-count-attribution-local-20260510-2157",
+    "analysisScope":  "script-based WIP/reference only; not the primary Spring replica conclusion",
+    "environment":  "local synthetic / local PostgreSQL + OpenSearch smoke",
+    "eventCount":  100,
+    "batchSize":  100,
+    "cases":  [
+                  {
+                      "workerCount":  1,
+                      "batchSize":  100,
+                      "runId":  "worker-count-attribution-local-20260510-2157-worker-1",
+                      "eventCount":  100,
+                      "claimedEvents":  100,
+                      "doneEvents":  100,
+                      "failedEvents":  0,
+                      "pendingCount":  0,
+                      "processingCount":  0,
+                      "totalProcessingTimeMs":  29098,
+                      "totalIndexingLagMs":  {
+                                                 "max":  29640.1810000,
+                                                 "p50":  16159.261999999999,
+                                                 "p95":  28311.890499999998,
+                                                 "p99":  29389.908010000003,
+                                                 "doneCount":  100
+                                             },
+                      "queueWaitMs":  {
+                                          "p50":  355,
+                                          "p95":  355,
+                                          "p99":  355,
+                                          "max":  355
+                                      },
+                      "sourceDocumentLoadMs":  {
+                                                   "p50":  128,
+                                                   "p95":  189,
+                                                   "p99":  211,
+                                                   "max":  244
+                                               },
+                      "openSearchWriteMs":  {
+                                                "p50":  8,
+                                                "p95":  20,
+                                                "p99":  75,
+                                                "max":  101
+                                            },
+                      "outboxStateTransitionMs":  {
+                                                      "p50":  128,
+                                                      "p95":  161,
+                                                      "p99":  199,
+                                                      "max":  199
+                                                  },
+                      "relayProcessingMs":  {
+                                                "p50":  267,
+                                                "p95":  335,
+                                                "p99":  389,
+                                                "max":  468
+                                            },
+                      "openSearchWriteDeleteCallCount":  100,
+                      "relayTimingLogLineCount":  100
+                  },
+                  {
+                      "workerCount":  2,
+                      "batchSize":  100,
+                      "runId":  "worker-count-attribution-local-20260510-2157-worker-2",
+                      "eventCount":  100,
+                      "claimedEvents":  100,
+                      "doneEvents":  100,
+                      "failedEvents":  0,
+                      "pendingCount":  0,
+                      "processingCount":  0,
+                      "totalProcessingTimeMs":  18012,
+                      "totalIndexingLagMs":  {
+                                                 "max":  18321.3200000,
+                                                 "p50":  10518.949499999999,
+                                                 "p95":  17576.1267,
+                                                 "p99":  18167.81555,
+                                                 "doneCount":  100
+                                             },
+                      "queueWaitMs":  {
+                                          "p50":  213,
+                                          "p95":  213,
+                                          "p99":  213,
+                                          "max":  213
+                                      },
+                      "sourceDocumentLoadMs":  {
+                                                   "p50":  150,
+                                                   "p95":  219,
+                                                   "p99":  291,
+                                                   "max":  312
+                                               },
+                      "openSearchWriteMs":  {
+                                                "p50":  7,
+                                                "p95":  12,
+                                                "p99":  149,
+                                                "max":  160
+                                            },
+                      "outboxStateTransitionMs":  {
+                                                      "p50":  150,
+                                                      "p95":  214,
+                                                      "p99":  283,
+                                                      "max":  297
+                                                  },
+                      "relayProcessingMs":  {
+                                                "p50":  306,
+                                                "p95":  456,
+                                                "p99":  683,
+                                                "max":  724
+                                            },
+                      "openSearchWriteDeleteCallCount":  100,
+                      "relayTimingLogLineCount":  100
+                  },
+                  {
+                      "workerCount":  4,
+                      "batchSize":  100,
+                      "runId":  "worker-count-attribution-local-20260510-2157-worker-4",
+                      "eventCount":  100,
+                      "claimedEvents":  100,
+                      "doneEvents":  100,
+                      "failedEvents":  0,
+                      "pendingCount":  0,
+                      "processingCount":  0,
+                      "totalProcessingTimeMs":  20283,
+                      "totalIndexingLagMs":  {
+                                                 "max":  20517.5750000,
+                                                 "p50":  13045.551500000001,
+                                                 "p95":  19798.66315,
+                                                 "p99":  20464.803050000002,
+                                                 "doneCount":  100
+                                             },
+                      "queueWaitMs":  {
+                                          "p50":  184,
+                                          "p95":  184,
+                                          "p99":  184,
+                                          "max":  184
+                                      },
+                      "sourceDocumentLoadMs":  {
+                                                   "p50":  212,
+                                                   "p95":  589,
+                                                   "p99":  702,
+                                                   "max":  819
+                                               },
+                      "openSearchWriteMs":  {
+                                                "p50":  9,
+                                                "p95":  71,
+                                                "p99":  266,
+                                                "max":  270
+                                            },
+                      "outboxStateTransitionMs":  {
+                                                      "p50":  214,
+                                                      "p95":  525,
+                                                      "p99":  564,
+                                                      "max":  609
+                                                  },
+                      "relayProcessingMs":  {
+                                                "p50":  458,
+                                                "p95":  1080,
+                                                "p99":  1273,
+                                                "max":  1436
+                                            },
+                      "openSearchWriteDeleteCallCount":  100,
+                      "relayTimingLogLineCount":  100
+                  }
+              ],
+    "resultFiles":  {
+                        "comparisonSummary":  "comparison-summary.json",
+                        "worker1Summary":  "worker-1-summary.json",
+                        "worker2Summary":  "worker-2-summary.json",
+                        "worker4Summary":  "worker-4-summary.json",
+                        "relayLogSample":  "relay-log-sample.txt"
+                    }
+}
