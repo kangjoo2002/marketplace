@@ -23,8 +23,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -69,14 +71,15 @@ class ProductSearchOutboxRelayServiceTest {
 	}
 
 	@Test
-	void deletesDocumentForProductDeletedEvent() {
+	void deletesDocumentWhenLatestProductIsMissing() {
 		SearchOutboxEvent event = event(2L, "PRODUCT_DELETED", 0);
 		when(outboxStore.claimPendingProductEvents(20, 60000L, "local-relay")).thenReturn(List.of(event));
+		when(documentRepository.findByProductId(10L)).thenReturn(Optional.empty());
 
 		relayService.processBatch();
 
+		verify(documentRepository).findByProductId(10L);
 		verify(indexWriter).deleteByProductId(10L);
-		verify(documentRepository, never()).findByProductId(10L);
 		verify(outboxStore).markDone(event);
 	}
 
@@ -98,7 +101,7 @@ class ProductSearchOutboxRelayServiceTest {
 		SearchOutboxEvent event = event(4L, "PRODUCT_UPDATED", 0);
 		when(outboxStore.claimPendingProductEvents(20, 60000L, "local-relay")).thenReturn(List.of(event));
 		when(documentRepository.findByProductId(10L)).thenReturn(Optional.of(activeDocument()));
-		org.mockito.Mockito.doThrow(new IllegalStateException("OpenSearch down"))
+		doThrow(new IllegalStateException("OpenSearch down"))
 				.when(indexWriter)
 				.upsert(any());
 
@@ -118,7 +121,7 @@ class ProductSearchOutboxRelayServiceTest {
 		SearchOutboxEvent event = event(5L, "PRODUCT_UPDATED", 2);
 		when(outboxStore.claimPendingProductEvents(20, 60000L, "local-relay")).thenReturn(List.of(event));
 		when(documentRepository.findByProductId(10L)).thenReturn(Optional.of(activeDocument()));
-		org.mockito.Mockito.doThrow(new IllegalStateException("OpenSearch down"))
+		doThrow(new IllegalStateException("OpenSearch down"))
 				.when(indexWriter)
 				.upsert(any());
 
@@ -129,10 +132,126 @@ class ProductSearchOutboxRelayServiceTest {
 		verify(outboxStore, never()).markDone(event);
 	}
 
+	@Test
+	void repeatedSameProductIdPreviouslyCausedRepeatedLoadsAndWritesButNowProcessesOnce() {
+		SearchOutboxEvent firstEvent = event(10L, 10L, "PRODUCT_UPDATED", 0);
+		SearchOutboxEvent secondEvent = event(11L, 10L, "PRODUCT_STATUS_CHANGED", 0);
+		SearchOutboxEvent thirdEvent = event(12L, 10L, "PRODUCT_UPDATED", 0);
+		when(outboxStore.claimPendingProductEvents(20, 60000L, "local-relay"))
+				.thenReturn(List.of(firstEvent, secondEvent, thirdEvent));
+		when(documentRepository.findByProductId(10L)).thenReturn(Optional.of(activeDocument()));
+
+		int processedCount = relayService.processBatch();
+
+		assertThat(processedCount).isEqualTo(3);
+		verify(documentRepository, times(1)).findByProductId(10L);
+		verify(indexWriter, times(1)).upsert(activeDocument().refreshedAt(LocalDateTime.parse("2026-05-02T10:02:00")));
+		verify(outboxStore).markDone(firstEvent);
+		verify(outboxStore).markDone(secondEvent);
+		verify(outboxStore).markDone(thirdEvent);
+	}
+
+	@Test
+	void differentProductIdsProcessSeparately() {
+		SearchOutboxEvent firstEvent = event(20L, 1L, "PRODUCT_UPDATED", 0);
+		SearchOutboxEvent secondEvent = event(21L, 2L, "PRODUCT_UPDATED", 0);
+		SearchOutboxEvent thirdEvent = event(22L, 3L, "PRODUCT_UPDATED", 0);
+		when(outboxStore.claimPendingProductEvents(20, 60000L, "local-relay"))
+				.thenReturn(List.of(firstEvent, secondEvent, thirdEvent));
+		when(documentRepository.findByProductId(1L)).thenReturn(Optional.of(activeDocument(1L)));
+		when(documentRepository.findByProductId(2L)).thenReturn(Optional.of(activeDocument(2L)));
+		when(documentRepository.findByProductId(3L)).thenReturn(Optional.of(activeDocument(3L)));
+
+		relayService.processBatch();
+
+		verify(documentRepository, times(1)).findByProductId(1L);
+		verify(documentRepository, times(1)).findByProductId(2L);
+		verify(documentRepository, times(1)).findByProductId(3L);
+		verify(indexWriter).upsert(activeDocument(1L).refreshedAt(LocalDateTime.parse("2026-05-02T10:02:00")));
+		verify(indexWriter).upsert(activeDocument(2L).refreshedAt(LocalDateTime.parse("2026-05-02T10:02:00")));
+		verify(indexWriter).upsert(activeDocument(3L).refreshedAt(LocalDateTime.parse("2026-05-02T10:02:00")));
+		verify(outboxStore).markDone(firstEvent);
+		verify(outboxStore).markDone(secondEvent);
+		verify(outboxStore).markDone(thirdEvent);
+	}
+
+	@Test
+	void mixedRepeatedAndSingleProductIdsProcessOncePerProductId() {
+		SearchOutboxEvent firstProductFirstEvent = event(30L, 1L, "PRODUCT_UPDATED", 0);
+		SearchOutboxEvent secondProductEvent = event(31L, 2L, "PRODUCT_UPDATED", 0);
+		SearchOutboxEvent firstProductSecondEvent = event(32L, 1L, "PRODUCT_STATUS_CHANGED", 0);
+		when(outboxStore.claimPendingProductEvents(20, 60000L, "local-relay"))
+				.thenReturn(List.of(firstProductFirstEvent, secondProductEvent, firstProductSecondEvent));
+		when(documentRepository.findByProductId(1L)).thenReturn(Optional.of(activeDocument(1L)));
+		when(documentRepository.findByProductId(2L)).thenReturn(Optional.of(activeDocument(2L)));
+
+		relayService.processBatch();
+
+		verify(documentRepository, times(1)).findByProductId(1L);
+		verify(documentRepository, times(1)).findByProductId(2L);
+		verify(indexWriter).upsert(activeDocument(1L).refreshedAt(LocalDateTime.parse("2026-05-02T10:02:00")));
+		verify(indexWriter).upsert(activeDocument(2L).refreshedAt(LocalDateTime.parse("2026-05-02T10:02:00")));
+		verify(outboxStore).markDone(firstProductFirstEvent);
+		verify(outboxStore).markDone(secondProductEvent);
+		verify(outboxStore).markDone(firstProductSecondEvent);
+	}
+
+	@Test
+	void productIdGroupFailureDoesNotBlockOtherProductIdGroups() {
+		SearchOutboxEvent failedFirstEvent = event(40L, 1L, "PRODUCT_UPDATED", 0);
+		SearchOutboxEvent successfulEvent = event(41L, 2L, "PRODUCT_UPDATED", 0);
+		SearchOutboxEvent failedSecondEvent = event(42L, 1L, "PRODUCT_STATUS_CHANGED", 0);
+		when(outboxStore.claimPendingProductEvents(20, 60000L, "local-relay"))
+				.thenReturn(List.of(failedFirstEvent, successfulEvent, failedSecondEvent));
+		when(documentRepository.findByProductId(1L)).thenReturn(Optional.of(activeDocument(1L)));
+		when(documentRepository.findByProductId(2L)).thenReturn(Optional.of(activeDocument(2L)));
+		doThrow(new IllegalStateException("OpenSearch down"))
+				.when(indexWriter)
+				.upsert(activeDocument(1L).refreshedAt(LocalDateTime.parse("2026-05-02T10:02:00")));
+
+		relayService.processBatch();
+
+		verify(outboxStore).markPendingRetry(
+				eq(failedFirstEvent),
+				contains("OpenSearch down"),
+				eq(LocalDateTime.parse("2026-05-02T10:02:10"))
+		);
+		verify(outboxStore).markPendingRetry(
+				eq(failedSecondEvent),
+				contains("OpenSearch down"),
+				eq(LocalDateTime.parse("2026-05-02T10:02:10"))
+		);
+		verify(outboxStore).markDone(successfulEvent);
+		verify(outboxStore, never()).markDone(failedFirstEvent);
+		verify(outboxStore, never()).markDone(failedSecondEvent);
+		verify(indexWriter).upsert(activeDocument(2L).refreshedAt(LocalDateTime.parse("2026-05-02T10:02:00")));
+	}
+
+	@Test
+	void repeatedSameProductIdWithMissingOrInactiveLatestProductDeletesOnceAndMarksAllDone() {
+		SearchOutboxEvent firstEvent = event(50L, 10L, "PRODUCT_UPDATED", 0);
+		SearchOutboxEvent secondEvent = event(51L, 10L, "PRODUCT_STATUS_CHANGED", 0);
+		when(outboxStore.claimPendingProductEvents(20, 60000L, "local-relay"))
+				.thenReturn(List.of(firstEvent, secondEvent));
+		when(documentRepository.findByProductId(10L)).thenReturn(Optional.of(deletedDocument()));
+
+		relayService.processBatch();
+
+		verify(documentRepository, times(1)).findByProductId(10L);
+		verify(indexWriter, times(1)).deleteByProductId(10L);
+		verify(indexWriter, never()).upsert(any());
+		verify(outboxStore).markDone(firstEvent);
+		verify(outboxStore).markDone(secondEvent);
+	}
+
 	private static SearchOutboxEvent event(long id, String eventType, int retryCount) {
+		return event(id, 10L, eventType, retryCount);
+	}
+
+	private static SearchOutboxEvent event(long id, long productId, String eventType, int retryCount) {
 		return new SearchOutboxEvent(
 				id,
-				10L,
+				productId,
 				eventType,
 				1,
 				"{}",
@@ -144,16 +263,20 @@ class ProductSearchOutboxRelayServiceTest {
 	}
 
 	private static ProductSearchDocument activeDocument() {
-		return document("ACTIVE");
+		return activeDocument(10L);
+	}
+
+	private static ProductSearchDocument activeDocument(long productId) {
+		return document(productId, "ACTIVE");
 	}
 
 	private static ProductSearchDocument deletedDocument() {
-		return document("DELETED");
+		return document(10L, "DELETED");
 	}
 
-	private static ProductSearchDocument document(String status) {
+	private static ProductSearchDocument document(long productId, String status) {
 		return new ProductSearchDocument(
-				10L,
+				productId,
 				20L,
 				30L,
 				40L,

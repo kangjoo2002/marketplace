@@ -127,3 +127,11 @@ db/experiments/a1-search-outbox-indexing-latency/results/prometheus-distributed-
 Decision note:
 
 The main remaining latency was `queueWait`, and fixedDelay attribution showed batch-to-batch polling delay was a major contributor. The distributed Prometheus comparison evaluated shorter polling, larger batch, and multi-batch per scheduler run: shorter polling reduced latency but increased idle polling, larger batch reduced `queueWait` but increases per-claim batch size, and multi-batch per scheduler run kept `fixedDelayMs` and `batchSize` unchanged, did not increase idle polling, and produced the best `totalProcessingTimeMs` / `totalIndexingLagMs p95` in the corrected run. Therefore A-1 selected `maxDrainRounds=5` before moving to larger changes like Bulk Indexing or payload snapshot.
+
+## ProductId duplicate reindex reduction
+
+Problem: the same `productId` can appear multiple times in one relay batch. Before, the same `productId` repeated N times was processed N times. After, the same `productId` repeated N times in one already-claimed relay batch is processed once.
+
+Scope: this applies only inside one already-claimed batch. The processing unit changes from a single outbox row to a `productId` group; if one `productId` group fails, multiple rows for that `productId` may retry together. Intermediate states are not indexed, which is valid here because the search index stores the latest product state.
+
+Limitation: duplicates split across different batches are not merged in this PR.

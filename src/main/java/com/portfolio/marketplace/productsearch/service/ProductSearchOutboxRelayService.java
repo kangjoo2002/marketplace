@@ -9,8 +9,11 @@ import com.portfolio.marketplace.productsearch.service.port.ProductSearchIndexWr
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -47,46 +50,53 @@ public class ProductSearchOutboxRelayService {
 				relay.getProcessingTimeoutMs(),
 				relay.getInstanceId()
 		);
-		for (SearchOutboxEvent event : events) {
-			processEvent(event);
+		for (List<SearchOutboxEvent> productEvents : groupByProductId(events).values()) {
+			processProductEvents(productEvents);
 		}
 		return events.size();
 	}
 
-	private void processEvent(SearchOutboxEvent event) {
-		IndexingLatencyMeasurement measurement = new IndexingLatencyMeasurement(event);
-		try {
-			if (event.isProductDeleteEvent()) {
-				long openSearchWriteStartedAt = System.nanoTime();
-				indexWriter.deleteByProductId(event.aggregateId());
-				measurement.recordOpenSearchWrite(openSearchWriteStartedAt);
-				markDone(event, measurement);
-				measurement.log("DONE");
-				return;
-			}
+	private Map<Long, List<SearchOutboxEvent>> groupByProductId(List<SearchOutboxEvent> events) {
+		return events.stream()
+				.collect(Collectors.groupingBy(
+						SearchOutboxEvent::aggregateId,
+						LinkedHashMap::new,
+						Collectors.toList()
+				));
+	}
 
+	private void processProductEvents(List<SearchOutboxEvent> events) {
+		SearchOutboxEvent firstEvent = events.get(0);
+		IndexingLatencyMeasurement measurement = new IndexingLatencyMeasurement();
+		try {
 			long sourceDocumentLoadStartedAt = System.nanoTime();
-			Optional<ProductSearchDocument> document = documentRepository.findByProductId(event.aggregateId());
+			Optional<ProductSearchDocument> document = documentRepository.findByProductId(firstEvent.aggregateId());
 			measurement.recordSourceDocumentLoad(sourceDocumentLoadStartedAt);
 			document
 					.map(this::refresh)
 					.ifPresentOrElse(
 							value -> upsertOrDeleteDeletedDocument(value, measurement),
-							() -> deleteByProductId(event.aggregateId(), measurement)
+							() -> deleteByProductId(firstEvent.aggregateId(), measurement)
 					);
-			markDone(event, measurement);
-			measurement.log("DONE");
+			markDone(events, measurement);
+			logEvents(events, "DONE", measurement);
 		} catch (RuntimeException exception) {
 			String errorMessage = exception.getMessage() == null
 					? exception.getClass().getSimpleName()
 					: exception.getMessage();
 			log.warn(
-					"Failed to relay product search outbox event. eventId={}, aggregateId={}, eventType={}",
-					event.id(),
-					event.aggregateId(),
-					event.eventType(),
+					"Failed to relay product search outbox event group. firstEventId={}, aggregateId={}, eventCount={}",
+					firstEvent.id(),
+					firstEvent.aggregateId(),
+					events.size(),
 					exception
 			);
+			markFailure(events, errorMessage, measurement);
+		}
+	}
+
+	private void markFailure(List<SearchOutboxEvent> events, String errorMessage, IndexingLatencyMeasurement measurement) {
+		for (SearchOutboxEvent event : events) {
 			markFailure(event, errorMessage, measurement);
 		}
 	}
@@ -96,7 +106,7 @@ public class ProductSearchOutboxRelayService {
 			long outboxStateTransitionStartedAt = System.nanoTime();
 			outboxStore.markFailed(event, errorMessage);
 			measurement.recordOutboxStateTransition(outboxStateTransitionStartedAt);
-			measurement.log("FAILED");
+			measurement.log(event, "FAILED");
 			return;
 		}
 		LocalDateTime nextRetryAt = LocalDateTime.now(clock)
@@ -104,7 +114,7 @@ public class ProductSearchOutboxRelayService {
 		long outboxStateTransitionStartedAt = System.nanoTime();
 		outboxStore.markPendingRetry(event, errorMessage, nextRetryAt);
 		measurement.recordOutboxStateTransition(outboxStateTransitionStartedAt);
-		measurement.log("PENDING_RETRY");
+		measurement.log(event, "PENDING_RETRY");
 	}
 
 	private ProductSearchDocument refresh(ProductSearchDocument document) {
@@ -136,6 +146,22 @@ public class ProductSearchOutboxRelayService {
 		measurement.recordOutboxStateTransition(outboxStateTransitionStartedAt);
 	}
 
+	private void markDone(List<SearchOutboxEvent> events, IndexingLatencyMeasurement measurement) {
+		for (SearchOutboxEvent event : events) {
+			markDone(event, measurement);
+		}
+	}
+
+	private static void logEvents(
+			List<SearchOutboxEvent> events,
+			String resultStatus,
+			IndexingLatencyMeasurement measurement
+	) {
+		for (SearchOutboxEvent event : events) {
+			measurement.log(event, resultStatus);
+		}
+	}
+
 	private static long elapsedMillis(long startedAtNanos) {
 		return Duration.ofNanos(System.nanoTime() - startedAtNanos).toMillis();
 	}
@@ -153,16 +179,11 @@ public class ProductSearchOutboxRelayService {
 
 	private static class IndexingLatencyMeasurement {
 
-		private final SearchOutboxEvent event;
 		private final long relayProcessingStartedAtNanos = System.nanoTime();
 
 		private long sourceDocumentLoadMs;
 		private long openSearchWriteMs;
 		private long outboxStateTransitionMs;
-
-		private IndexingLatencyMeasurement(SearchOutboxEvent event) {
-			this.event = event;
-		}
 
 		private void recordSourceDocumentLoad(long startedAtNanos) {
 			sourceDocumentLoadMs += elapsedMillis(startedAtNanos);
@@ -176,7 +197,7 @@ public class ProductSearchOutboxRelayService {
 			outboxStateTransitionMs += elapsedMillis(startedAtNanos);
 		}
 
-		private void log(String resultStatus) {
+		private void log(SearchOutboxEvent event, String resultStatus) {
 			long completedAtNanos = System.nanoTime();
 			log.info(
 					"product_search_outbox_indexing_latency eventId={} aggregateId={} eventType={} resultStatus={} "
