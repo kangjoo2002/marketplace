@@ -6,6 +6,8 @@ import com.portfolio.marketplace.productsearch.domain.SearchOutboxEvent;
 import com.portfolio.marketplace.productsearch.repository.ProductSearchDocumentRepository;
 import com.portfolio.marketplace.productsearch.repository.SearchOutboxStore;
 import com.portfolio.marketplace.productsearch.service.port.ProductSearchIndexWriter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -13,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,19 +31,22 @@ public class ProductSearchOutboxRelayService {
 	private final ProductSearchIndexWriter indexWriter;
 	private final ProductSearchIndexingProperties indexingProperties;
 	private final Clock clock;
+	private final MeterRegistry meterRegistry;
 
 	public ProductSearchOutboxRelayService(
 			SearchOutboxStore outboxStore,
 			ProductSearchDocumentRepository documentRepository,
 			ProductSearchIndexWriter indexWriter,
 			ProductSearchIndexingProperties indexingProperties,
-			Clock clock
+			Clock clock,
+			MeterRegistry meterRegistry
 	) {
 		this.outboxStore = outboxStore;
 		this.documentRepository = documentRepository;
 		this.indexWriter = indexWriter;
 		this.indexingProperties = indexingProperties;
 		this.clock = clock;
+		this.meterRegistry = meterRegistry;
 	}
 
 	public int processBatch() {
@@ -77,8 +83,9 @@ public class ProductSearchOutboxRelayService {
 					.ifPresentOrElse(
 							value -> upsertOrDeleteDeletedDocument(value, measurement),
 							() -> deleteByProductId(firstEvent.aggregateId(), measurement)
-					);
+			);
 			markDone(events, measurement);
+			recordMetrics(firstEvent, "done", measurement);
 			logEvents(events, "DONE", measurement);
 		} catch (RuntimeException exception) {
 			String errorMessage = exception.getMessage() == null
@@ -91,23 +98,32 @@ public class ProductSearchOutboxRelayService {
 					events.size(),
 					exception
 			);
-			markFailure(events, errorMessage, measurement);
+			String result = markFailure(events, errorMessage, measurement);
+			recordMetrics(firstEvent, result, measurement);
 		}
 	}
 
-	private void markFailure(List<SearchOutboxEvent> events, String errorMessage, IndexingLatencyMeasurement measurement) {
+	private String markFailure(
+			List<SearchOutboxEvent> events,
+			String errorMessage,
+			IndexingLatencyMeasurement measurement
+	) {
+		boolean failed = false;
 		for (SearchOutboxEvent event : events) {
-			markFailure(event, errorMessage, measurement);
+			if ("failed".equals(markFailure(event, errorMessage, measurement))) {
+				failed = true;
+			}
 		}
+		return failed ? "failed" : "pending_retry";
 	}
 
-	private void markFailure(SearchOutboxEvent event, String errorMessage, IndexingLatencyMeasurement measurement) {
+	private String markFailure(SearchOutboxEvent event, String errorMessage, IndexingLatencyMeasurement measurement) {
 		if (event.retryCount() + 1 >= indexingProperties.getRelay().getMaxRetryCount()) {
 			long outboxStateTransitionStartedAt = System.nanoTime();
 			outboxStore.markFailed(event, errorMessage);
 			measurement.recordOutboxStateTransition(outboxStateTransitionStartedAt);
 			measurement.log(event, "FAILED");
-			return;
+			return "failed";
 		}
 		LocalDateTime nextRetryAt = LocalDateTime.now(clock)
 				.plusNanos(indexingProperties.getRelay().getRetryDelayMs() * 1_000_000);
@@ -115,6 +131,7 @@ public class ProductSearchOutboxRelayService {
 		outboxStore.markPendingRetry(event, errorMessage, nextRetryAt);
 		measurement.recordOutboxStateTransition(outboxStateTransitionStartedAt);
 		measurement.log(event, "PENDING_RETRY");
+		return "pending_retry";
 	}
 
 	private ProductSearchDocument refresh(ProductSearchDocument document) {
@@ -162,6 +179,46 @@ public class ProductSearchOutboxRelayService {
 		}
 	}
 
+	private void recordMetrics(SearchOutboxEvent event, String result, IndexingLatencyMeasurement measurement) {
+		String instanceId = indexingProperties.getRelay().getInstanceId();
+		Duration queueWait = queueWait(event);
+		if (!queueWait.isNegative()) {
+			recordTimer("product_search_outbox_relay_queue_wait", instanceId, result, queueWait.toNanos());
+		}
+		recordTimer(
+				"product_search_outbox_relay_source_document_load",
+				instanceId,
+				result,
+				measurement.sourceDocumentLoadNanos
+		);
+		recordTimer(
+				"product_search_outbox_relay_opensearch_write",
+				instanceId,
+				result,
+				measurement.openSearchWriteNanos
+		);
+		recordTimer(
+				"product_search_outbox_relay_state_transition",
+				instanceId,
+				result,
+				measurement.outboxStateTransitionNanos
+		);
+		recordTimer(
+				"product_search_outbox_relay_processing",
+				instanceId,
+				result,
+				measurement.elapsedProcessingNanos()
+		);
+	}
+
+	private void recordTimer(String name, String instanceId, String result, long elapsedNanos) {
+		Timer.builder(name)
+				.tag("instance_id", instanceId)
+				.tag("result", result)
+				.register(meterRegistry)
+				.record(elapsedNanos, TimeUnit.NANOSECONDS);
+	}
+
 	private static long elapsedMillis(long startedAtNanos) {
 		return Duration.ofNanos(System.nanoTime() - startedAtNanos).toMillis();
 	}
@@ -171,30 +228,46 @@ public class ProductSearchOutboxRelayService {
 	}
 
 	private static long queueWaitMillis(SearchOutboxEvent event) {
-		if (event.createdAt() == null || event.claimedAt() == null) {
+		Duration queueWait = queueWait(event);
+		if (queueWait.isNegative()) {
 			return -1L;
 		}
-		return Math.max(0L, Duration.between(event.createdAt(), event.claimedAt()).toMillis());
+		return queueWait.toMillis();
+	}
+
+	private static Duration queueWait(SearchOutboxEvent event) {
+		if (event.createdAt() == null || event.claimedAt() == null) {
+			return Duration.ofNanos(-1);
+		}
+		Duration queueWait = Duration.between(event.createdAt(), event.claimedAt());
+		if (queueWait.isNegative()) {
+			return Duration.ofNanos(-1);
+		}
+		return queueWait;
 	}
 
 	private static class IndexingLatencyMeasurement {
 
 		private final long relayProcessingStartedAtNanos = System.nanoTime();
 
-		private long sourceDocumentLoadMs;
-		private long openSearchWriteMs;
-		private long outboxStateTransitionMs;
+		private long sourceDocumentLoadNanos;
+		private long openSearchWriteNanos;
+		private long outboxStateTransitionNanos;
 
 		private void recordSourceDocumentLoad(long startedAtNanos) {
-			sourceDocumentLoadMs += elapsedMillis(startedAtNanos);
+			sourceDocumentLoadNanos += System.nanoTime() - startedAtNanos;
 		}
 
 		private void recordOpenSearchWrite(long startedAtNanos) {
-			openSearchWriteMs += elapsedMillis(startedAtNanos);
+			openSearchWriteNanos += System.nanoTime() - startedAtNanos;
 		}
 
 		private void recordOutboxStateTransition(long startedAtNanos) {
-			outboxStateTransitionMs += elapsedMillis(startedAtNanos);
+			outboxStateTransitionNanos += System.nanoTime() - startedAtNanos;
+		}
+
+		private long elapsedProcessingNanos() {
+			return System.nanoTime() - relayProcessingStartedAtNanos;
 		}
 
 		private void log(SearchOutboxEvent event, String resultStatus) {
@@ -208,9 +281,9 @@ public class ProductSearchOutboxRelayService {
 					event.eventType(),
 					resultStatus,
 					queueWaitMillis(event),
-					sourceDocumentLoadMs,
-					openSearchWriteMs,
-					outboxStateTransitionMs,
+					Duration.ofNanos(sourceDocumentLoadNanos).toMillis(),
+					Duration.ofNanos(openSearchWriteNanos).toMillis(),
+					Duration.ofNanos(outboxStateTransitionNanos).toMillis(),
 					elapsedMillis(relayProcessingStartedAtNanos, completedAtNanos)
 			);
 		}

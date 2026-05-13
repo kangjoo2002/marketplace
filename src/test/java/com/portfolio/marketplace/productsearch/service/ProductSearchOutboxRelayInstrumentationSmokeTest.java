@@ -8,6 +8,7 @@ import com.portfolio.marketplace.productsearch.repository.SearchOutboxClaimDao;
 import com.portfolio.marketplace.productsearch.repository.SearchOutboxJpaRepository;
 import com.portfolio.marketplace.productsearch.repository.SearchOutboxStore;
 import com.portfolio.marketplace.productsearch.service.port.ProductSearchIndexWriter;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
@@ -55,7 +56,8 @@ class ProductSearchOutboxRelayInstrumentationSmokeTest {
 				documentRepository,
 				indexWriter,
 				properties,
-				Clock.fixed(Instant.parse("2026-05-10T11:00:00Z"), ZoneOffset.UTC)
+				Clock.fixed(Instant.parse("2026-05-10T11:00:00Z"), ZoneOffset.UTC),
+				new SimpleMeterRegistry()
 		);
 		org.mockito.Mockito.when(documentRepository.findByProductId(org.mockito.ArgumentMatchers.anyLong()))
 				.thenAnswer(invocation -> Optional.of(document(invocation.getArgument(0))));
